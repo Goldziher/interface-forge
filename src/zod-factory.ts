@@ -26,7 +26,7 @@ type ZodSchema = z.ZodTypeAny;
  */
 export function createFactoryFromZod<T extends ZodSchema>(
   schema: T,
-  config: ZodFactoryConfig = {}
+  config?: ZodFactoryConfig
 ): {
   generate(): z.infer<T>;
   batch(count: number): z.infer<T>[];
