@@ -12,6 +12,163 @@ export interface ZodFactoryConfig extends FactoryOptions {
 }
 
 /**
+ * Type for custom Zod type handlers
+ */
+export type ZodTypeHandler = (schema: ZodSchema, factory: Factory<unknown>, config: ZodFactoryConfig) => unknown;
+
+/**
+ * Registry for custom Zod type handlers
+ */
+class ZodTypeRegistry {
+  private handlers = new Map<string, ZodTypeHandler>();
+
+  /**
+   * Register a custom handler for a Zod type
+   * @param typeName The name/identifier of the Zod type (e.g., 'ZodBigInt', 'ZodNaN')
+   * @param handler Function that generates mock data for this type
+   */
+  register(typeName: string, handler: ZodTypeHandler): void {
+    this.handlers.set(typeName, handler);
+  }
+
+  /**
+   * Get a handler for a Zod type
+   * @param typeName The name/identifier of the Zod type
+   * @returns The handler function or undefined if not found
+   */
+  get(typeName: string): ZodTypeHandler | undefined {
+    return this.handlers.get(typeName);
+  }
+
+  /**
+   * Check if a handler exists for a Zod type
+   * @param typeName The name/identifier of the Zod type
+   * @returns True if handler exists
+   */
+  has(typeName: string): boolean {
+    return this.handlers.has(typeName);
+  }
+
+  /**
+   * Remove a handler for a Zod type
+   * @param typeName The name/identifier of the Zod type
+   */
+  unregister(typeName: string): boolean {
+    return this.handlers.delete(typeName);
+  }
+
+  /**
+   * Clear all registered handlers
+   */
+  clear(): void {
+    this.handlers.clear();
+  }
+
+  /**
+   * Get all registered type names
+   */
+  getRegisteredTypes(): string[] {
+    return Array.from(this.handlers.keys());
+  }
+}
+
+/**
+ * Global registry instance
+ */
+const zodTypeRegistry = new ZodTypeRegistry();
+
+/**
+ * Register a custom handler for a Zod type
+ * @param typeName The name/identifier of the Zod type (e.g., 'ZodBigInt', 'ZodNaN')
+ * @param handler Function that generates mock data for this type
+ * 
+ * @example
+ * ```typescript
+ * import { z } from 'zod';
+ * import { registerZodType } from 'interface-forge/zod';
+ * 
+ * // Register handler for BigInt
+ * registerZodType('ZodBigInt', (schema, factory) => {
+ *   return BigInt(factory.number.int({ min: 0, max: 1000000 }));
+ * });
+ * 
+ * // Register handler for custom validation
+ * registerZodType('ZodNaN', (schema, factory) => {
+ *   return NaN;
+ * });
+ * 
+ * // Now you can use it
+ * const schema = z.object({
+ *   bigNumber: z.bigint(),
+ *   notANumber: z.nan(),
+ * });
+ * ```
+ */
+export function registerZodType(typeName: string, handler: ZodTypeHandler): void {
+  zodTypeRegistry.register(typeName, handler);
+}
+
+/**
+ * Unregister a custom handler for a Zod type
+ * @param typeName The name/identifier of the Zod type
+ * @returns True if the handler was found and removed
+ */
+export function unregisterZodType(typeName: string): boolean {
+  return zodTypeRegistry.unregister(typeName);
+}
+
+/**
+ * Get all registered custom Zod type names
+ * @returns Array of registered type names
+ */
+export function getRegisteredZodTypes(): string[] {
+  return zodTypeRegistry.getRegisteredTypes();
+}
+
+/**
+ * Clear all registered custom Zod type handlers
+ */
+export function clearZodTypeRegistry(): void {
+  zodTypeRegistry.clear();
+}
+
+// Register some common built-in Zod types that aren't in the basic set
+zodTypeRegistry.register('ZodBigInt', (schema, factory) => {
+  return BigInt(factory.number.int({ min: 0, max: 1000000 }));
+});
+
+zodTypeRegistry.register('ZodNaN', () => {
+  return NaN;
+});
+
+zodTypeRegistry.register('ZodVoid', () => {
+  return undefined;
+});
+
+zodTypeRegistry.register('ZodNever', () => {
+  throw new Error('ZodNever should never be reached in factory generation');
+});
+
+zodTypeRegistry.register('ZodFunction', (schema, factory) => {
+  // Return a mock function that returns a random value
+  return () => factory.lorem.word();
+});
+
+zodTypeRegistry.register('ZodPromise', (schema, factory) => {
+  const zodType = schema._def as Record<string, unknown>;
+  const innerType = zodType.type as ZodSchema;
+  const innerValue = generateFactorySchema(innerType, factory, {});
+  return Promise.resolve(innerValue);
+});
+
+zodTypeRegistry.register('ZodLazy', (schema, factory, config) => {
+  const zodType = schema._def as Record<string, unknown>;
+  const getter = zodType.getter as () => ZodSchema;
+  const lazySchema = getter();
+  return generateFactorySchema(lazySchema, factory, config);
+});
+
+/**
  * A Factory class that extends the base Factory to work with Zod schemas
  */
 export class ZodFactory<T extends ZodSchema> extends Factory<z.infer<T>> {
@@ -55,6 +212,13 @@ function generateFactorySchema(schema: ZodSchema, factory: Factory<unknown>, con
   // Check for custom generator first
   if (schema.description && config.customGenerators?.[schema.description]) {
     return config.customGenerators[schema.description]();
+  }
+
+  // Check for registered custom type handlers
+  const typeName = schema.constructor.name;
+  if (zodTypeRegistry.has(typeName)) {
+    const handler = zodTypeRegistry.get(typeName)!;
+    return handler(schema, factory, config);
   }
 
   // Handle different Zod types
@@ -204,6 +368,7 @@ function generateFactorySchema(schema: ZodSchema, factory: Factory<unknown>, con
   }
 
   // Handle default case - try to generate a reasonable default
+  console.warn(`Unknown Zod type: ${typeName}. Consider registering a custom handler with registerZodType(). Falling back to lorem word.`);
   return factory.lorem.word();
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { createFactoryFromZod, ZodFactory } from './zod.js';
+import { createFactoryFromZod, ZodFactory, registerZodType, unregisterZodType, getRegisteredZodTypes, clearZodTypeRegistry } from './zod.js';
 
 describe('createFactoryFromZod', () => {
     it('should create a ZodFactory instance', () => {
@@ -8,6 +8,190 @@ describe('createFactoryFromZod', () => {
         const factory = createFactoryFromZod(schema);
         
         expect(factory).toBeInstanceOf(ZodFactory);
+    });
+
+    describe('Custom Type Registration', () => {
+        it('should register and use custom type handlers', () => {
+            // Register a custom handler for a hypothetical custom type
+            registerZodType('ZodCustomString', (schema, factory) => {
+                return 'CUSTOM_' + factory.lorem.word().toUpperCase();
+            });
+
+            // Create a mock schema that will use the custom handler
+            const customSchema = {
+                constructor: { name: 'ZodCustomString' },
+                _def: {},
+                description: undefined
+            } as any;
+
+            const factory = createFactoryFromZod(customSchema);
+            const result = factory.build();
+
+            expect(typeof result).toBe('string');
+            expect(result).toMatch(/^CUSTOM_[A-Z]+$/);
+
+            // Clean up
+            unregisterZodType('ZodCustomString');
+        });
+
+        it('should handle built-in registered types', () => {
+            // Test BigInt
+            const bigIntSchema = {
+                constructor: { name: 'ZodBigInt' },
+                _def: {},
+                description: undefined
+            } as any;
+
+            const factory = createFactoryFromZod(bigIntSchema);
+            const result = factory.build();
+
+            expect(typeof result).toBe('bigint');
+            expect(result).toBeGreaterThanOrEqual(0n);
+            expect(result).toBeLessThanOrEqual(1000000n);
+        });
+
+        it('should handle NaN type', () => {
+            const nanSchema = {
+                constructor: { name: 'ZodNaN' },
+                _def: {},
+                description: undefined
+            } as any;
+
+            const factory = createFactoryFromZod(nanSchema);
+            const result = factory.build();
+
+            expect(Number.isNaN(result)).toBe(true);
+        });
+
+        it('should handle void type', () => {
+            const voidSchema = {
+                constructor: { name: 'ZodVoid' },
+                _def: {},
+                description: undefined
+            } as any;
+
+            const factory = createFactoryFromZod(voidSchema);
+            const result = factory.build();
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should handle function type', () => {
+            const functionSchema = {
+                constructor: { name: 'ZodFunction' },
+                _def: {},
+                description: undefined
+            } as any;
+
+            const factory = createFactoryFromZod(functionSchema);
+            const result = factory.build();
+
+            expect(typeof result).toBe('function');
+            expect(typeof result()).toBe('string'); // Should return a word
+        });
+
+        it('should handle promise type', () => {
+            const promiseSchema = {
+                constructor: { name: 'ZodPromise' },
+                _def: {
+                    type: z.string()
+                },
+                description: undefined
+            } as any;
+
+            const factory = createFactoryFromZod(promiseSchema);
+            const result = factory.build();
+
+            expect(result).toBeInstanceOf(Promise);
+            return result.then((value: any) => {
+                expect(typeof value).toBe('string');
+            });
+        });
+
+        it('should get registered types', () => {
+            const initialTypes = getRegisteredZodTypes();
+            expect(initialTypes).toContain('ZodBigInt');
+            expect(initialTypes).toContain('ZodNaN');
+            expect(initialTypes).toContain('ZodVoid');
+            expect(initialTypes).toContain('ZodFunction');
+            expect(initialTypes).toContain('ZodPromise');
+            expect(initialTypes).toContain('ZodLazy');
+
+            // Register a new type
+            registerZodType('TestType', () => 'test');
+            const updatedTypes = getRegisteredZodTypes();
+            expect(updatedTypes).toContain('TestType');
+
+            // Clean up
+            unregisterZodType('TestType');
+        });
+
+        it('should unregister types', () => {
+            registerZodType('TemporaryType', () => 'temp');
+            expect(getRegisteredZodTypes()).toContain('TemporaryType');
+
+            const wasRemoved = unregisterZodType('TemporaryType');
+            expect(wasRemoved).toBe(true);
+            expect(getRegisteredZodTypes()).not.toContain('TemporaryType');
+
+            // Try to remove non-existent type
+            const notRemoved = unregisterZodType('NonExistentType');
+            expect(notRemoved).toBe(false);
+        });
+
+        it('should clear registry', () => {
+            const initialCount = getRegisteredZodTypes().length;
+            expect(initialCount).toBeGreaterThan(0);
+
+            clearZodTypeRegistry();
+            expect(getRegisteredZodTypes()).toHaveLength(0);
+
+            // Re-register built-in types for other tests
+            registerZodType('ZodBigInt', (schema, factory) => {
+                return BigInt(factory.number.int({ min: 0, max: 1000000 }));
+            });
+            registerZodType('ZodNaN', () => NaN);
+            registerZodType('ZodVoid', () => undefined);
+            registerZodType('ZodFunction', (schema, factory) => () => factory.lorem.word());
+            registerZodType('ZodPromise', (schema, factory) => {
+                const zodType = schema._def as Record<string, unknown>;
+                const innerType = zodType.type as any;
+                return Promise.resolve(factory.lorem.word());
+            });
+            registerZodType('ZodLazy', (schema, factory, config) => {
+                return factory.lorem.word();
+            });
+        });
+
+        it('should handle third-party zod extensions', () => {
+            // Simulate a third-party Zod extension like zod-openapi
+            registerZodType('ZodOpenApi', (schema, factory) => {
+                const zodType = schema._def as Record<string, unknown>;
+                // Extract the underlying type and generate for that
+                const baseType = zodType.innerType as any;
+                if (baseType instanceof z.ZodString) {
+                    return factory.lorem.sentence();
+                }
+                return factory.lorem.word();
+            });
+
+            const customExtensionSchema = {
+                constructor: { name: 'ZodOpenApi' },
+                _def: {
+                    innerType: z.string()
+                },
+                description: undefined
+            } as any;
+
+            const factory = createFactoryFromZod(customExtensionSchema);
+            const result = factory.build();
+
+            expect(typeof result).toBe('string');
+            expect(result.split(' ').length).toBeGreaterThan(1); // Should be a sentence
+
+            // Clean up
+            unregisterZodType('ZodOpenApi');
+        });
     });
 
     describe('String schemas', () => {

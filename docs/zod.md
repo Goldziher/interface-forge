@@ -257,6 +257,136 @@ const randomStatusGenerator = UserFactory.sample(['active', 'inactive', 'pending
 
 ## Advanced Examples
 
+### Custom Zod Type Registration
+
+Interface-forge supports registering custom handlers for extended Zod types from third-party packages. This is useful when you're using packages that extend Zod with custom types.
+
+#### Registering Custom Types
+
+```typescript
+import { z } from 'zod';
+import { registerZodType, createFactoryFromZod } from 'interface-forge/zod';
+
+// Register a handler for BigInt
+registerZodType('ZodBigInt', (schema, factory) => {
+  return BigInt(factory.number.int({ min: 0, max: 1000000 }));
+});
+
+// Register a handler for custom validation
+registerZodType('ZodNaN', (schema, factory) => {
+  return NaN;
+});
+
+// Register a handler for functions
+registerZodType('ZodFunction', (schema, factory) => {
+  // Return a mock function
+  return (input: any) => factory.lorem.word();
+});
+
+// Register a handler for Promises
+registerZodType('ZodPromise', (schema, factory) => {
+  const zodType = schema._def as Record<string, unknown>;
+  const innerType = zodType.type as any;
+  const innerValue = generateFactorySchema(innerType, factory, {});
+  return Promise.resolve(innerValue);
+});
+```
+
+#### Third-Party Package Integration
+
+For packages like `zod-openapi`, `zod-form-data`, etc.:
+
+```typescript
+import { z } from 'zod';
+import { extendZod } from 'zod-openapi'; // Example third-party package
+import { registerZodType, createFactoryFromZod } from 'interface-forge/zod';
+
+// Extend Zod with OpenAPI
+const zodWithOpenApi = extendZod(z);
+
+// Register a handler for the OpenAPI extension
+registerZodType('ZodOpenApi', (schema, factory, config) => {
+  const zodType = schema._def as Record<string, unknown>;
+  
+  // Extract the underlying Zod type
+  const baseType = zodType.innerType || zodType.type;
+  
+  // Generate based on the underlying type
+  if (baseType) {
+    return generateFactorySchema(baseType, factory, config);
+  }
+  
+  // Fallback to a default value
+  return factory.lorem.word();
+});
+
+// Now you can use extended schemas
+const OpenApiSchema = zodWithOpenApi.object({
+  id: zodWithOpenApi.string().openapi({ example: 'user-123' }),
+  name: zodWithOpenApi.string().openapi({ description: 'User name' }),
+});
+
+const factory = createFactoryFromZod(OpenApiSchema);
+const user = factory.build();
+```
+
+#### Available Registration Functions
+
+```typescript
+import { 
+  registerZodType, 
+  unregisterZodType, 
+  getRegisteredZodTypes, 
+  clearZodTypeRegistry 
+} from 'interface-forge/zod';
+
+// Register a custom type
+registerZodType('MyCustomType', (schema, factory, config) => {
+  return 'custom-value';
+});
+
+// Get all registered types
+const registeredTypes = getRegisteredZodTypes();
+console.log(registeredTypes); // ['ZodBigInt', 'ZodNaN', 'MyCustomType', ...]
+
+// Unregister a type
+const wasRemoved = unregisterZodType('MyCustomType');
+console.log(wasRemoved); // true
+
+// Clear all registered types (useful for testing)
+clearZodTypeRegistry();
+```
+
+#### Built-in Extended Types
+
+Interface-forge comes with handlers for these extended Zod types:
+
+- **ZodBigInt** - Generates random BigInt values
+- **ZodNaN** - Returns NaN
+- **ZodVoid** - Returns undefined  
+- **ZodNever** - Throws an error (as expected)
+- **ZodFunction** - Returns a mock function that generates random values
+- **ZodPromise** - Returns a Promise resolving to the inner type
+- **ZodLazy** - Resolves lazy schemas and generates for the resolved type
+
+#### TypeScript Support
+
+The registration system is fully typed:
+
+```typescript
+import type { ZodTypeHandler } from 'interface-forge/zod';
+
+const myHandler: ZodTypeHandler = (schema, factory, config) => {
+  // schema: ZodSchema (the Zod schema instance)
+  // factory: Factory<unknown> (the factory instance for generating data)
+  // config: ZodFactoryConfig (the factory configuration)
+  
+  return 'my-custom-value';
+};
+
+registerZodType('MyType', myHandler);
+```
+
 ### Nested Schemas with References
 
 ```typescript
@@ -336,6 +466,7 @@ const userWithOverrides = UserFactory.build({
 - Subsequent `build()` and `batch()` calls are optimized for performance
 - Complex schemas with deep nesting may take longer to generate
 - Consider caching factories for frequently used schemas
+- Custom type handlers are called for each generation, so keep them lightweight
 
 ## Limitations
 
@@ -374,7 +505,8 @@ const UserFactory = createFactoryFromZod(UserSchema);
 2. **Use descriptive names**: Use `.describe()` for fields that need custom generators
 3. **Leverage constraints**: Use Zod's built-in constraints for realistic test data
 4. **Cache factories**: Store factory instances to avoid recreation overhead
-5. **Combine with existing factories**: Use Zod factories alongside manual factories as needed
+5. **Register custom types early**: Set up custom type handlers before creating factories
+6. **Combine with existing factories**: Use Zod factories alongside manual factories as needed
 
 ## Troubleshooting
 
@@ -388,6 +520,9 @@ const UserFactory = createFactoryFromZod(UserSchema);
 
 **Issue**: Performance issues with large schemas
 **Solution**: Consider using simpler schemas for testing or implement custom generators for expensive operations
+
+**Issue**: Unknown Zod type warnings
+**Solution**: Register a custom handler using `registerZodType()` for third-party Zod extensions
 
 ### Debug Mode
 

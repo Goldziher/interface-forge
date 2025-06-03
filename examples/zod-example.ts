@@ -2,7 +2,7 @@
 // This file is an example and variables are intentionally created for demonstration purposes
 
 import { z } from 'zod';
-import { createFactoryFromZod } from '../src/zod.js';
+import { createFactoryFromZod, registerZodType } from '../src/zod.js';
 
 // Example 1: Basic User Schema
 const UserSchema = z.object({
@@ -283,5 +283,140 @@ testObjects.forEach((obj, index) => {
 });
 
 console.log(`\nValidation Results: ${validCount}/${testObjects.length} objects passed validation`);
+
+console.log('\n=== Custom Zod Type Registration Examples ===');
+
+// Example: Registering BigInt support
+registerZodType('ZodBigInt', (schema, factory) => {
+  return BigInt(factory.number.int({ min: 0, max: 1000000 }));
+});
+
+// Create a mock BigInt schema (since z.bigint() might not be available in all Zod versions)
+const bigIntSchema = {
+  constructor: { name: 'ZodBigInt' },
+  _def: {}
+} as any;
+
+const bigIntFactory = createFactoryFromZod(bigIntSchema);
+const bigIntValue = bigIntFactory.build();
+console.log('Generated BigInt:', bigIntValue, 'Type:', typeof bigIntValue);
+
+// Example: Third-party package simulation (like zod-openapi)
+registerZodType('ZodOpenApi', (schema, factory, config) => {
+  const zodType = schema._def as Record<string, unknown>;
+  
+  // Simulate extracting metadata from OpenAPI extension
+  const openApiMeta = zodType.openapi as { example?: unknown; description?: string };
+  
+  if (openApiMeta?.example) {
+    return openApiMeta.example;
+  }
+  
+  // Extract the underlying type
+  const baseType = zodType.innerType || zodType.type;
+  
+  if (baseType && typeof baseType === 'object' && 'constructor' in baseType) {
+    const typeName = (baseType.constructor as { name: string }).name;
+    if (typeName === 'ZodString') {
+      return factory.lorem.sentence();
+    }
+    if (typeName === 'ZodNumber') {
+      return factory.number.float({ min: 0, max: 1000 });
+    }
+  }
+  
+  return factory.lorem.word();
+});
+
+// Create a mock OpenAPI-extended schema
+const openApiSchema = {
+  constructor: { name: 'ZodOpenApi' },
+  _def: {
+    innerType: z.string(),
+    openapi: {
+      description: 'A user description',
+      example: 'John Doe from OpenAPI example'
+    }
+  }
+} as any;
+
+const openApiFactory = createFactoryFromZod(openApiSchema);
+const openApiValue = openApiFactory.build();
+console.log('Generated OpenAPI value:', openApiValue);
+
+// Example: Custom validation type
+registerZodType('ZodCustomValidation', (schema, factory) => {
+  const zodType = schema._def as Record<string, unknown>;
+  const validationType = zodType.validationType as string;
+  
+  switch (validationType) {
+    case 'email':
+      return factory.internet.email();
+    case 'phone':
+      return factory.phone.number();
+    case 'uuid':
+      return factory.string.uuid();
+    case 'credit-card':
+      return factory.finance.creditCardNumber();
+    default:
+      return factory.lorem.word();
+  }
+});
+
+const customValidationSchema = {
+  constructor: { name: 'ZodCustomValidation' },
+  _def: {
+    validationType: 'email'
+  }
+} as any;
+
+const customValidationFactory = createFactoryFromZod(customValidationSchema);
+const customValidationValue = customValidationFactory.build();
+console.log('Generated custom validation value:', customValidationValue);
+
+// Example: Extending existing object schemas with custom metadata
+registerZodType('ZodWithMetadata', (schema, factory, config) => {
+  const zodType = schema._def as Record<string, unknown>;
+  const baseSchema = zodType.baseSchema as z.ZodObject<any>;
+  const metadata = zodType.metadata as Record<string, unknown>;
+  
+  // For this example, we'll create a simple object instead of using internal functions
+  const baseResult: Record<string, unknown> = {
+    name: factory.person.fullName(),
+    email: factory.internet.email(),
+  };
+  
+  // Add metadata fields
+  if (metadata?.includeTimestamps) {
+    baseResult.createdAt = factory.date.recent();
+    baseResult.updatedAt = factory.date.recent();
+  }
+  
+  if (metadata?.includeId) {
+    baseResult.id = factory.string.uuid();
+  }
+  
+  return baseResult;
+});
+
+const withMetadataSchema = {
+  constructor: { name: 'ZodWithMetadata' },
+  _def: {
+    baseSchema: z.object({
+      name: z.string(),
+      email: z.string().email(),
+    }),
+    metadata: {
+      includeTimestamps: true,
+      includeId: true,
+    }
+  }
+} as any;
+
+const withMetadataFactory = createFactoryFromZod(withMetadataSchema);
+const withMetadataValue = withMetadataFactory.build();
+console.log('Generated with metadata:', withMetadataValue);
+
+console.log('\n=== Custom Type Registration Complete ===');
 
 console.log('\n=== All Examples Completed ==='); 
