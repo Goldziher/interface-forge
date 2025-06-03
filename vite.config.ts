@@ -31,6 +31,6 @@ export default defineConfig({
             reporter: ['text', 'lcov'],
         },
         globals: true,
-        include: ['tests/**/*.spec.ts'],
+        include: ['tests/**/*.spec.ts', 'src/**/*.spec.ts'],
     },
 });
