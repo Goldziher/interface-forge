@@ -19,6 +19,20 @@ export type FactorySchema<T> = {
         | T[K];
 };
 
+export interface FactoryOptions {
+    /**
+     * The locale data to use for this instance.
+     * If an array is provided, the first locale that has a definition for a given property will be used.
+     */
+    locale?: LocaleDefinition | LocaleDefinition[];
+    /**
+     * The Randomizer to use.
+     * Specify this only if you want to use it to achieve a specific goal,
+     * such as sharing the same random generator with other instances/tools.
+     */
+    randomizer?: Randomizer;
+}
+
 /*
  * A reference to a function that returns a value of type `T`.
  * */
@@ -50,19 +64,7 @@ export class Factory<T> extends Faker {
 
     constructor(
         factory: FactoryFunction<T>,
-        options?: {
-            /**
-             * The locale data to use for this instance.
-             * If an array is provided, the first locale that has a definition for a given property will be used.
-             */
-            locale?: LocaleDefinition | LocaleDefinition[];
-            /**
-             * The Randomizer to use.
-             * Specify this only if you want to use it to achieve a specific goal,
-             * such as sharing the same random generator with other instances/tools.
-             */
-            randomizer?: Randomizer;
-        },
+        options?: FactoryOptions,
     ) {
         super({
             locale: options?.locale ?? en,
@@ -273,11 +275,8 @@ export class Factory<T> extends Faker {
             return iterator.next().value;
         }
         if (isRecord(value)) {
-            const record = value as Record<string, unknown>;
             return Object.fromEntries(
-
-                Object.entries(record).map(([k, v]) => [k, this.parseValue(v)]),
-
+                Object.entries(value).map(([k, v]) => [k, this.parseValue(v)]),
             );
         }
         return value;
@@ -306,7 +305,7 @@ function iterableToArray<T>(iterable: Iterable<T>): T[] {
 function merge<T>(target: T, ...sources: unknown[]): T {
     const output: Partial<T> = { ...target };
     for (const source of sources.filter(Boolean) as Partial<T>[]) {
-        for (const [key, value] of Object.entries(source as Record<string, unknown>)) {
+        for (const [key, value] of Object.entries(source)) {
             const existingValue: unknown = Reflect.get(output, key);
             if (isRecord(value) && isRecord(existingValue)) {
                 Reflect.set(output, key, merge(existingValue, value));
@@ -318,5 +317,5 @@ function merge<T>(target: T, ...sources: unknown[]): T {
     return output as T;
 }
 
-// Export Zod factory functionality
-export { createFactoryFromZod, type ZodFactoryConfig } from './zod-factory.js';
+// Export Zod factory functionality removed to avoid optional dependency issues
+// Users should import directly from 'interface-forge/zod' when needed

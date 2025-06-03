@@ -54,7 +54,9 @@ yarn add --dev interface-forge
 pnpm add --save-dev interface-forge
 ```
 
-For Zod integration, also install Zod:
+### Optional: Zod Integration
+
+If you want to use the automatic factory generation from [Zod](https://zod.dev/) schemas, install Zod as well (it's declared as an optional peerDependency):
 
 ```shell
 # npm
@@ -126,70 +128,26 @@ describe('User', () => {
 });
 ```
 
-## Zod Integration
+## Zod Integration (Optional)
 
-Interface-Forge now supports automatic factory generation from [Zod](https://zod.dev/) schemas! This feature allows you to automatically create factories that respect your schema constraints and validations.
-
-### Basic Zod Usage
+If you have Zod installed, you can automatically generate factories from Zod schemas:
 
 ```typescript
 import { z } from 'zod';
-import { createFactoryFromZod } from 'interface-forge';
+import { createFactoryFromZod } from 'interface-forge/zod';
 
 const UserSchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(1),
+  name: z.string(),
   email: z.string().email(),
-  age: z.number().int().min(0).max(120),
-  isActive: z.boolean(),
-  createdAt: z.date(),
-  tags: z.array(z.string()),
-  metadata: z.record(z.unknown()).optional()
+  age: z.number().int().min(18).max(100),
 });
 
-// Automatically create a factory from the Zod schema
 const UserFactory = createFactoryFromZod(UserSchema);
-
-// Use the factory just like any other factory
 const user = UserFactory.build();
-const users = UserFactory.batch(10);
 ```
 
-### Advanced Zod Features
-
-The Zod integration supports:
-
-- **All primitive types**: strings, numbers, booleans, dates
-- **String constraints**: email, URL, UUID, min/max length
-- **Number constraints**: min/max values, integers
-- **Complex types**: objects, arrays, records, unions, intersections
-- **Optional and nullable fields**
-- **Enums and literal types**
-- **Custom generators** for specific fields
-
-```typescript
-// Complex schema with constraints
-const ProductSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(3).max(50),
-  price: z.number().positive().max(1000),
-  category: z.enum(['electronics', 'clothing', 'books']),
-  tags: z.array(z.string()).min(1).max(5),
-  metadata: z.record(z.string()).optional(),
-  inStock: z.boolean(),
-});
-
-const ProductFactory = createFactoryFromZod(ProductSchema);
-
-// Custom generators for specific fields
-const CustomProductFactory = createFactoryFromZod(ProductSchema, {
-  customGenerators: {
-    productId: () => `PROD-${Math.random().toString(36).substr(2, 9)}`,
-  },
-});
-```
-
-For detailed documentation on Zod integration, see [docs/zod-factory.md](docs/zod-factory.md).
+For detailed documentation on Zod integration, see [docs/zod.md](docs/zod.md).
 
 ## API Reference
 

@@ -4,21 +4,31 @@ The `createFactoryFromZod` function allows you to automatically generate factori
 
 ## Installation
 
-First, make sure you have both `interface-forge` and `zod` installed:
+First, make sure you have `interface-forge` installed:
 
 ```bash
-npm install interface-forge zod
+npm install interface-forge
 # or
-pnpm add interface-forge zod
+pnpm add interface-forge
 # or
-yarn add interface-forge zod
+yarn add interface-forge
+```
+
+Since Zod is declared as an optional peerDependency, you also need to install it separately:
+
+```bash
+npm install zod
+# or
+pnpm add zod
+# or
+yarn add zod
 ```
 
 ## Basic Usage
 
 ```typescript
 import { z } from 'zod';
-import { createFactoryFromZod } from 'interface-forge';
+import { createFactoryFromZod } from 'interface-forge/zod';
 
 const UserSchema = z.object({
   id: z.string().uuid(),
