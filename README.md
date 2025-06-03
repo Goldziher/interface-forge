@@ -7,10 +7,20 @@
 
 Interface-Forge is a TypeScript library for creating strongly typed mock data factories. This library builds upon [Faker.js](https://fakerjs.dev/) by providing a simple and intuitive `Factory` class that extends the `Faker` class from [Faker.js](https://fakerjs.dev/).
 
+## Features
+
+- 🏭 **Type-safe factories** - Generate mock data with full TypeScript support
+- 🎯 **Faker.js integration** - Built on top of the popular Faker.js library
+- 🔧 **Flexible API** - Support for custom generators, iterations, and sampling
+- 📋 **Zod integration** - Automatically generate factories from Zod schemas
+- 🎲 **Randomization control** - Deterministic generation with custom randomizers
+- 🌍 **Locale support** - Generate localized data using Faker.js locales
+
 ## Table of Contents
 
 - [Installation](#installation)
 - [Basic Example](#basic-example)
+- [Zod Integration](#zod-integration)
 - [API Reference](#api-reference)
   - [Factory Class Methods](#factory-class-methods)
     - [build](#build)
@@ -36,6 +46,19 @@ yarn add --dev interface-forge
 
 # pnpm
 pnpm add --save-dev interface-forge
+```
+
+For Zod integration, also install Zod:
+
+```shell
+# npm
+npm install zod
+
+# yarn
+yarn add zod
+
+# pnpm
+pnpm add zod
 ```
 
 ## Basic Example
@@ -96,6 +119,71 @@ describe('User', () => {
     // ...
 });
 ```
+
+## Zod Integration
+
+Interface-Forge now supports automatic factory generation from [Zod](https://zod.dev/) schemas! This feature allows you to automatically create factories that respect your schema constraints and validations.
+
+### Basic Zod Usage
+
+```typescript
+import { z } from 'zod';
+import { createFactoryFromZod } from 'interface-forge';
+
+const UserSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  email: z.string().email(),
+  age: z.number().int().min(0).max(120),
+  isActive: z.boolean(),
+  createdAt: z.date(),
+  tags: z.array(z.string()),
+  metadata: z.record(z.unknown()).optional()
+});
+
+// Automatically create a factory from the Zod schema
+const UserFactory = createFactoryFromZod(UserSchema);
+
+// Use the factory just like any other factory
+const user = UserFactory.build();
+const users = UserFactory.batch(10);
+```
+
+### Advanced Zod Features
+
+The Zod integration supports:
+
+- **All primitive types**: strings, numbers, booleans, dates
+- **String constraints**: email, URL, UUID, min/max length
+- **Number constraints**: min/max values, integers
+- **Complex types**: objects, arrays, records, unions, intersections
+- **Optional and nullable fields**
+- **Enums and literal types**
+- **Custom generators** for specific fields
+
+```typescript
+// Complex schema with constraints
+const ProductSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(3).max(50),
+  price: z.number().positive().max(1000),
+  category: z.enum(['electronics', 'clothing', 'books']),
+  tags: z.array(z.string()).min(1).max(5),
+  metadata: z.record(z.string()).optional(),
+  inStock: z.boolean(),
+});
+
+const ProductFactory = createFactoryFromZod(ProductSchema);
+
+// Custom generators for specific fields
+const CustomProductFactory = createFactoryFromZod(ProductSchema, {
+  customGenerators: {
+    productId: () => `PROD-${Math.random().toString(36).substr(2, 9)}`,
+  },
+});
+```
+
+For detailed documentation on Zod integration, see [docs/zod-factory.md](docs/zod-factory.md).
 
 ## API Reference
 

@@ -204,7 +204,7 @@ export class Factory<T> extends Faker {
         }
         if (isRecord(value)) {
             return Object.fromEntries(
-                Object.entries(value).map(([k, v]) => [k, this.parseValue(v)]),
+                Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, this.parseValue(v)]),
             );
         }
         return value;
@@ -233,7 +233,7 @@ function iterableToArray<T>(iterable: Iterable<T>): T[] {
 function merge<T>(target: T, ...sources: unknown[]): T {
     const output: Partial<T> = { ...target };
     for (const source of sources.filter(Boolean) as Partial<T>[]) {
-        for (const [key, value] of Object.entries(source)) {
+        for (const [key, value] of Object.entries(source as Record<string, unknown>)) {
             const existingValue: unknown = Reflect.get(output, key);
             if (isRecord(value) && isRecord(existingValue)) {
                 Reflect.set(output, key, merge(existingValue, value));
@@ -244,3 +244,6 @@ function merge<T>(target: T, ...sources: unknown[]): T {
     }
     return output as T;
 }
+
+// Export Zod factory functionality
+export { createFactoryFromZod, type ZodFactoryConfig } from './zod-factory.js';
