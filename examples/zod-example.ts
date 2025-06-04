@@ -2,21 +2,24 @@
 // This file is an example and variables are intentionally created for demonstration purposes
 
 import { z } from 'zod';
-import { createFactoryFromZod, registerZodType } from '../src/zod.js';
+import { registerZodType, ZodFactory } from '../src/zod.js';
+
+console.log('Running Zod Factory Examples...\n');
 
 // Example 1: Basic User Schema
+console.log('=== Basic User Schema ===');
 const UserSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).max(100),
-  email: z.string().email(),
   age: z.number().int().min(18).max(120),
-  isActive: z.boolean(),
   createdAt: z.date(),
+  email: z.string().email(),
+  id: z.string().uuid(),
+  isActive: z.boolean(),
+  name: z.string().min(1).max(100),
 });
 
-const userFactory = createFactoryFromZod(UserSchema);
+const userFactory = new ZodFactory(UserSchema);
 
-console.log('=== Basic User Example ===');
+console.log('Basic User Example:');
 const user = userFactory.build();
 console.log('Generated User:', user);
 
@@ -26,35 +29,35 @@ console.log('Batch of 3 users:', users);
 
 // Build with overrides
 const customUser = userFactory.build({
-  name: 'John Doe',
-  email: 'john.doe@example.com'
+  email: 'john.doe@example.com',
+  name: 'John Doe'
 });
 console.log('User with overrides:', customUser);
 
 // Example 2: Complex E-commerce Product Schema
 const ProductSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).max(200),
-  description: z.string().optional(),
-  price: z.number().min(0).max(99999.99),
   category: z.enum(['electronics', 'clothing', 'books', 'home', 'sports']),
+  createdAt: z.date(),
+  description: z.string().optional(),
+  id: z.string().uuid(),
   inStock: z.boolean(),
-  tags: z.array(z.string()).min(1).max(10),
-  variants: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    price: z.number().min(0),
-    available: z.boolean(),
-  })).optional(),
+  name: z.string().min(1).max(200),
+  price: z.number().min(0).max(99_999.99),
   ratings: z.object({
     average: z.number().min(1).max(5),
     count: z.number().int().min(0),
   }),
-  createdAt: z.date(),
+  tags: z.array(z.string()).min(1).max(10),
   updatedAt: z.date().optional(),
+  variants: z.array(z.object({
+    available: z.boolean(),
+    id: z.string(),
+    name: z.string(),
+    price: z.number().min(0),
+  })).optional(),
 });
 
-const productFactory = createFactoryFromZod(ProductSchema);
+const productFactory = new ZodFactory(ProductSchema);
 
 console.log('\n=== E-commerce Product Example ===');
 const product = productFactory.build();
@@ -62,36 +65,36 @@ console.log('Generated Product:', JSON.stringify(product, null, 2));
 
 // Example 3: Company with Employees (Complex Nested Schema)
 const EmployeeSchema = z.object({
-  id: z.string().uuid(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  email: z.string().email(),
-  position: z.string(),
   department: z.enum(['engineering', 'marketing', 'sales', 'hr', 'finance']),
-  salary: z.number().int().min(30000).max(500000),
-  startDate: z.date(),
+  email: z.string().email(),
+  firstName: z.string().min(1),
+  id: z.string().uuid(),
   isActive: z.boolean(),
+  lastName: z.string().min(1),
+  position: z.string(),
+  salary: z.number().int().min(30_000).max(500_000),
   skills: z.array(z.string()).min(1).max(15),
+  startDate: z.date(),
 });
 
 const CompanySchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1),
-  website: z.string().url().optional(),
-  employees: z.array(EmployeeSchema).min(1).max(10),
   address: z.object({
-    street: z.string(),
     city: z.string(),
-    state: z.string(),
-    zipCode: z.string(),
     country: z.string(),
+    state: z.string(),
+    street: z.string(),
+    zipCode: z.string(),
   }),
+  employees: z.array(EmployeeSchema).min(1).max(10),
   foundedAt: z.date(),
+  id: z.string().uuid(),
   industry: z.string(),
+  name: z.string().min(1),
   revenue: z.number().min(0).optional(),
+  website: z.string().url().optional(),
 });
 
-const companyFactory = createFactoryFromZod(CompanySchema);
+const companyFactory = new ZodFactory(CompanySchema);
 
 console.log('\n=== Complex Company Example ===');
 const company = companyFactory.build();
@@ -101,38 +104,38 @@ console.log(`Industry: ${company.industry}`);
 console.log(`Employees: ${company.employees.length}`);
 console.log(`Address: ${company.address.city}, ${company.address.state}`);
 console.log('First Employee:', {
+  department: company.employees[0].department,
   name: `${company.employees[0].firstName} ${company.employees[0].lastName}`,
   position: company.employees[0].position,
-  department: company.employees[0].department,
   salary: company.employees[0].salary,
 });
 
 // Example 4: Union Types
 const EventSchema = z.union([
   z.object({
-    type: z.literal('click'),
-    element: z.string(),
-    timestamp: z.date(),
     coordinates: z.object({
       x: z.number(),
       y: z.number(),
     }),
+    element: z.string(),
+    timestamp: z.date(),
+    type: z.literal('click'),
   }),
   z.object({
-    type: z.literal('scroll'),
+    direction: z.enum(['up', 'down']),
     position: z.number(),
     timestamp: z.date(),
-    direction: z.enum(['up', 'down']),
+    type: z.literal('scroll'),
   }),
   z.object({
-    type: z.literal('keypress'),
     key: z.string(),
-    timestamp: z.date(),
     modifiers: z.array(z.enum(['ctrl', 'alt', 'shift'])).optional(),
+    timestamp: z.date(),
+    type: z.literal('keypress'),
   }),
 ]);
 
-const eventFactory = createFactoryFromZod(EventSchema);
+const eventFactory = new ZodFactory(EventSchema);
 
 console.log('\n=== Union Types Example ===');
 const events = eventFactory.batch(5);
@@ -142,21 +145,21 @@ events.forEach((event, index) => {
 
 // Example 5: Custom Generators
 const OrderSchema = z.object({
-  id: z.string().describe('order-id'),
+  createdAt: z.date(),
   customerId: z.string().describe('customer-id'),
+  id: z.string().describe('order-id'),
+  notes: z.string().optional(),
   productId: z.string().describe('product-id'),
   quantity: z.number().int().min(1).max(100),
   status: z.enum(['pending', 'processing', 'shipped', 'delivered', 'cancelled']),
   total: z.number().min(0),
-  createdAt: z.date(),
-  notes: z.string().optional(),
 });
 
-const orderFactory = createFactoryFromZod(OrderSchema, {
+const orderFactory = new ZodFactory(OrderSchema, {
   customGenerators: {
-    'order-id': () => `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
-    'customer-id': () => `CUST-${Math.random().toString(36).substr(2, 10).toUpperCase()}`,
-    'product-id': () => `PROD-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+    'customer-id': () => `CUST-${Math.random().toString(36).slice(2, 12).toUpperCase()}`,
+    'order-id': () => `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+    'product-id': () => `PROD-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
   },
 });
 
@@ -166,22 +169,22 @@ console.log('Generated Order with Custom IDs:', order);
 
 // Example 6: Array Constraints
 const PlaylistSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).max(100),
+  createdAt: z.date(),
+  createdBy: z.string().uuid(),
   description: z.string().optional(),
+  id: z.string().uuid(),
+  isPublic: z.boolean(),
+  name: z.string().min(1).max(100),
   songs: z.array(z.object({
-    id: z.string().uuid(),
-    title: z.string().min(1),
     artist: z.string().min(1),
     duration: z.number().int().min(1).max(600), // 1 second to 10 minutes
     genre: z.enum(['rock', 'pop', 'jazz', 'classical', 'electronic', 'hip-hop']),
+    id: z.string().uuid(),
+    title: z.string().min(1),
   })).min(3).max(20),
-  isPublic: z.boolean(),
-  createdBy: z.string().uuid(),
-  createdAt: z.date(),
 });
 
-const playlistFactory = createFactoryFromZod(PlaylistSchema);
+const playlistFactory = new ZodFactory(PlaylistSchema);
 
 console.log('\n=== Array Constraints Example ===');
 const playlist = playlistFactory.build();
@@ -195,14 +198,14 @@ playlist.songs.slice(0, 3).forEach((song, index) => {
 
 // Example 7: Optional and Nullable Fields
 const UserProfileSchema = z.object({
-  id: z.string().uuid(),
-  username: z.string().min(3).max(30),
-  email: z.string().email(),
-  displayName: z.string().optional(),
-  bio: z.string().max(500).nullable(),
   avatar: z.string().url().optional(),
+  bio: z.string().max(500).nullable(),
+  createdAt: z.date(),
+  displayName: z.string().optional(),
+  email: z.string().email(),
+  id: z.string().uuid(),
+  lastLoginAt: z.date().nullable(),
   settings: z.object({
-    theme: z.enum(['light', 'dark']).optional(),
     notifications: z.object({
       email: z.boolean(),
       push: z.boolean(),
@@ -212,26 +215,26 @@ const UserProfileSchema = z.object({
       profileVisibility: z.enum(['public', 'friends', 'private']),
       showEmail: z.boolean(),
     }).optional(),
+    theme: z.enum(['light', 'dark']).optional(),
   }),
   socialLinks: z.array(z.object({
     platform: z.enum(['twitter', 'linkedin', 'github', 'website']),
     url: z.string().url(),
   })).optional(),
-  lastLoginAt: z.date().nullable(),
-  createdAt: z.date(),
+  username: z.string().min(3).max(30),
 });
 
-const userProfileFactory = createFactoryFromZod(UserProfileSchema);
+const userProfileFactory = new ZodFactory(UserProfileSchema);
 
 console.log('\n=== Optional and Nullable Fields Example ===');
 const profiles = userProfileFactory.batch(3);
 profiles.forEach((profile, index) => {
   console.log(`Profile ${index + 1}:`);
   console.log(`  Username: ${profile.username}`);
-  console.log(`  Display Name: ${profile.displayName || 'Not set'}`);
-  console.log(`  Bio: ${profile.bio || 'Not set'}`);
-  console.log(`  Theme: ${profile.settings.theme || 'Default'}`);
-  console.log(`  Social Links: ${profile.socialLinks?.length || 0}`);
+  console.log(`  Display Name: ${profile.displayName ?? 'Not set'}`);
+  console.log(`  Bio: ${profile.bio ?? 'Not set'}`);
+  console.log(`  Theme: ${profile.settings.theme ?? 'Default'}`);
+  console.log(`  Social Links: ${profile.socialLinks?.length ?? 0}`);
   console.log(`  Last Login: ${profile.lastLoginAt ? profile.lastLoginAt.toISOString() : 'Never'}`);
 });
 
@@ -240,11 +243,11 @@ console.log('\n=== Performance Testing ===');
 const SimpleSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  value: z.number(),
   timestamp: z.date(),
+  value: z.number(),
 });
 
-const simpleFactory = createFactoryFromZod(SimpleSchema);
+const simpleFactory = new ZodFactory(SimpleSchema);
 
 console.log('Generating 1000 simple objects...');
 const startTime = Date.now();
@@ -254,19 +257,19 @@ const endTime = Date.now();
 console.log(`Generated 1000 objects in ${endTime - startTime}ms`);
 console.log('Sample objects:');
 simpleObjects.slice(0, 3).forEach((obj, index) => {
-  console.log(`  ${index + 1}. ID: ${obj.id.substr(0, 8)}..., Name: ${obj.name}, Value: ${obj.value}`);
+  console.log(`  ${index + 1}. ID: ${obj.id.slice(0, 8)}..., Name: ${obj.name}, Value: ${obj.value}`);
 });
 
 // Example 9: Validation Testing
 console.log('\n=== Validation Testing ===');
 const StrictSchema = z.object({
-  email: z.string().email(),
   age: z.number().int().min(18).max(100),
+  email: z.string().email(),
   username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/),
   website: z.string().url().optional(),
 });
 
-const strictFactory = createFactoryFromZod(StrictSchema);
+const strictFactory = new ZodFactory(StrictSchema);
 
 console.log('Testing validation of generated data...');
 const testObjects = strictFactory.batch(10);
@@ -288,25 +291,25 @@ console.log('\n=== Custom Zod Type Registration Examples ===');
 
 // Example: Registering BigInt support
 registerZodType('ZodBigInt', (schema, factory) => {
-  return BigInt(factory.number.int({ min: 0, max: 1000000 }));
+  return BigInt(factory.number.int({ max: 1_000_000, min: 0 }));
 });
 
 // Create a mock BigInt schema (since z.bigint() might not be available in all Zod versions)
 const bigIntSchema = {
-  constructor: { name: 'ZodBigInt' },
-  _def: {}
-} as any;
+  _def: {},
+  constructor: { name: 'ZodBigInt' }
+} as unknown;
 
-const bigIntFactory = createFactoryFromZod(bigIntSchema);
+const bigIntFactory = new ZodFactory(bigIntSchema as z.ZodTypeAny);
 const bigIntValue = bigIntFactory.build();
 console.log('Generated BigInt:', bigIntValue, 'Type:', typeof bigIntValue);
 
 // Example: Third-party package simulation (like zod-openapi)
-registerZodType('ZodOpenApi', (schema, factory, config) => {
+registerZodType('ZodOpenApi', (schema, factory, _config) => {
   const zodType = schema._def as Record<string, unknown>;
   
   // Simulate extracting metadata from OpenAPI extension
-  const openApiMeta = zodType.openapi as { example?: unknown; description?: string };
+  const openApiMeta = zodType.openapi as { description?: string; example?: unknown; } | undefined;
   
   if (openApiMeta?.example) {
     return openApiMeta.example;
@@ -321,7 +324,7 @@ registerZodType('ZodOpenApi', (schema, factory, config) => {
       return factory.lorem.sentence();
     }
     if (typeName === 'ZodNumber') {
-      return factory.number.float({ min: 0, max: 1000 });
+      return factory.number.float({ max: 1000, min: 0 });
     }
   }
   
@@ -330,17 +333,17 @@ registerZodType('ZodOpenApi', (schema, factory, config) => {
 
 // Create a mock OpenAPI-extended schema
 const openApiSchema = {
-  constructor: { name: 'ZodOpenApi' },
   _def: {
     innerType: z.string(),
     openapi: {
       description: 'A user description',
       example: 'John Doe from OpenAPI example'
     }
-  }
-} as any;
+  },
+  constructor: { name: 'ZodOpenApi' }
+} as unknown;
 
-const openApiFactory = createFactoryFromZod(openApiSchema);
+const openApiFactory = new ZodFactory(openApiSchema as z.ZodTypeAny);
 const openApiValue = openApiFactory.build();
 console.log('Generated OpenAPI value:', openApiValue);
 
@@ -350,40 +353,45 @@ registerZodType('ZodCustomValidation', (schema, factory) => {
   const validationType = zodType.validationType as string;
   
   switch (validationType) {
-    case 'email':
-      return factory.internet.email();
-    case 'phone':
-      return factory.phone.number();
-    case 'uuid':
-      return factory.string.uuid();
-    case 'credit-card':
+    case 'credit-card': {
       return factory.finance.creditCardNumber();
-    default:
+    }
+    case 'email': {
+      return factory.internet.email();
+    }
+    case 'phone': {
+      return factory.phone.number();
+    }
+    case 'uuid': {
+      return factory.string.uuid();
+    }
+    default: {
       return factory.lorem.word();
+    }
   }
 });
 
 const customValidationSchema = {
-  constructor: { name: 'ZodCustomValidation' },
   _def: {
     validationType: 'email'
-  }
-} as any;
+  },
+  constructor: { name: 'ZodCustomValidation' }
+} as unknown;
 
-const customValidationFactory = createFactoryFromZod(customValidationSchema);
+const customValidationFactory = new ZodFactory(customValidationSchema as z.ZodTypeAny);
 const customValidationValue = customValidationFactory.build();
 console.log('Generated custom validation value:', customValidationValue);
 
 // Example: Extending existing object schemas with custom metadata
-registerZodType('ZodWithMetadata', (schema, factory, config) => {
+registerZodType('ZodWithMetadata', (schema, factory, _config) => {
   const zodType = schema._def as Record<string, unknown>;
-  const baseSchema = zodType.baseSchema as z.ZodObject<any>;
+  const baseSchema = zodType.baseSchema as z.ZodObject<z.ZodRawShape>;
   const metadata = zodType.metadata as Record<string, unknown>;
   
   // For this example, we'll create a simple object instead of using internal functions
   const baseResult: Record<string, unknown> = {
-    name: factory.person.fullName(),
     email: factory.internet.email(),
+    name: factory.person.fullName(),
   };
   
   // Add metadata fields
@@ -400,20 +408,20 @@ registerZodType('ZodWithMetadata', (schema, factory, config) => {
 });
 
 const withMetadataSchema = {
-  constructor: { name: 'ZodWithMetadata' },
   _def: {
     baseSchema: z.object({
-      name: z.string(),
       email: z.string().email(),
+      name: z.string(),
     }),
     metadata: {
-      includeTimestamps: true,
       includeId: true,
+      includeTimestamps: true,
     }
-  }
-} as any;
+  },
+  constructor: { name: 'ZodWithMetadata' }
+} as unknown;
 
-const withMetadataFactory = createFactoryFromZod(withMetadataSchema);
+const withMetadataFactory = new ZodFactory(withMetadataSchema as z.ZodTypeAny);
 const withMetadataValue = withMetadataFactory.build();
 console.log('Generated with metadata:', withMetadataValue);
 
