@@ -87,7 +87,7 @@ async function runExamples(): Promise<void> {
     console.log('Generated user:', JSON.stringify(user, null, 2));
 
     // Generate multiple users with overrides
-    const users = UserFactory.buildMany(3, { isActive: true });
+    const users = UserFactory.batch(3, { isActive: true });
     console.log(`Generated ${users.length} active users`);
 
     // Example 2: Complex E-commerce Schema
@@ -265,7 +265,7 @@ async function runExamples(): Promise<void> {
 
     const NotificationFactory =
         await createFactoryFromJsonSchema(notificationSchema);
-    const notifications = NotificationFactory.buildMany(3);
+    const notifications = NotificationFactory.batch(3);
     console.log(
         'Generated notifications:',
         JSON.stringify(notifications, null, 2),
@@ -302,7 +302,7 @@ async function runExamples(): Promise<void> {
         customSchema,
         options,
     );
-    const customItems = CustomFactory.buildMany(3);
+    const customItems = CustomFactory.batch(3);
     console.log(
         'Generated items with custom formats:',
         JSON.stringify(customItems, null, 2),
@@ -341,7 +341,7 @@ async function runExamples(): Promise<void> {
             name: blogUser.name,
         },
     }) as GeneratedArticle;
-    const comments = blogFactories.comment.buildMany(3, {
+    const comments = blogFactories.comment.batch(3, {
         articleId: blogArticle.id,
         authorId: blogUser.id,
     });
@@ -493,8 +493,8 @@ async function runExamples(): Promise<void> {
 
     // Compose with other factories
     const UserWithProductsFactory = UserFactory.compose({
-        favoriteProducts: ProductFactory.buildMany(2),
-        recentlyViewed: ProductFactory.buildMany(5),
+        favoriteProducts: ProductFactory.batch(2),
+        recentlyViewed: ProductFactory.batch(5),
     });
 
     const userWithProducts = UserWithProductsFactory.build();
@@ -540,7 +540,7 @@ async function runExamples(): Promise<void> {
     const TreeFactory = await createFactoryFromJsonSchema(treeNodeSchema, {
         maxDepth: 3,
     });
-    const trees = TreeFactory.buildMany(2);
+    const trees = TreeFactory.batch(2);
     console.log('Generated tree structures:', JSON.stringify(trees, null, 2));
 
     // Enhanced allOf with constraint merging
@@ -577,7 +577,7 @@ async function runExamples(): Promise<void> {
     const ComposedFactory = await createFactoryFromJsonSchema(
         advancedCompositionSchema,
     );
-    const composedItems = ComposedFactory.buildMany(3);
+    const composedItems = ComposedFactory.batch(3);
     console.log(
         'Generated composed items:',
         JSON.stringify(composedItems, null, 2),
@@ -609,7 +609,7 @@ async function runExamples(): Promise<void> {
         recursiveAnyOfSchema,
         { maxDepth: 2 },
     );
-    const recursiveItems = RecursiveFactory.buildMany(3);
+    const recursiveItems = RecursiveFactory.batch(3);
     console.log(
         'Generated recursive items (safe):',
         JSON.stringify(recursiveItems, null, 2),
@@ -629,7 +629,7 @@ async function runExamples(): Promise<void> {
         '- Use validation to ensure generated data meets your schema requirements',
     );
     console.log(
-        '- buildMany() method provides API compatibility with JSON Schema requirements',
+        '- batch() method provides API compatibility with JSON Schema requirements',
     );
     console.log(
         '- Enhanced $ref and allOf support handles complex schema compositions',

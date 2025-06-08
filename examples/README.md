@@ -78,7 +78,7 @@ Automatically generate factories from JSON Schema definitions:
 - Data validation against original schemas
 - Performance benchmarking vs manual factories
 - Integration with existing Factory features
-- Batch generation with `buildMany()` for API compatibility
+- Batch generation with `batch()` for API compatibility
 - Real-world API testing scenarios
 
 **Note**: This example requires optional dependencies:
@@ -118,7 +118,7 @@ const UserFactory = await createFactoryFromJsonSchema(userSchema);
 
 // Generate data
 const user = UserFactory.build();
-const users = UserFactory.buildMany(100); // JSON Schema API compatible
+const users = UserFactory.batch(100); // JSON Schema API compatible
 // Also available: UserFactory.batch(100) - legacy method
 
 // Validate generated data

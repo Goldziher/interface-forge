@@ -42,15 +42,10 @@ Interface-Forge is a TypeScript library for creating strongly typed mock data fa
         - [JSON Schema Installation](#json-schema-installation)
         - [JSON Schema Basic Usage](#json-schema-basic-usage)
         - [JSON Schema Advanced Features](#json-schema-advanced-features)
-        - [JSON Schema Performance](#json-schema-performance)
-    - [Performance Benchmarks](#performance-benchmarks)
-        - [Benchmark Results](#benchmark-results)
-        - [Running Benchmarks](#running-benchmarks)
-        - [Performance Considerations](#performance-considerations)
-        - [TypeScript Compatibility](#typescript-compatibility)
-        - [Faker.js Integration](#fakerjs-integration)
-        - [Contributing](#contributing)
-        - [License](#license)
+    - [TypeScript Compatibility](#typescript-compatibility)
+    - [Faker.js Integration](#fakerjs-integration)
+    - [Contributing](#contributing)
+    - [License](#license)
 
 ## Installation
 
@@ -514,7 +509,7 @@ const UserFactory = await createFactoryFromJsonSchema(userSchema);
 
 // Use like any other factory
 const user = UserFactory.build();
-const users = UserFactory.buildMany(10);
+const users = UserFactory.batch(10);
 
 // Override specific properties
 const customUser = UserFactory.build({
@@ -523,7 +518,7 @@ const customUser = UserFactory.build({
 });
 
 // Generate multiple instances
-const users = UserFactory.buildMany(5, { isActive: true });
+const users = UserFactory.batch(5, { isActive: true });
 ```
 
 ### JSON Schema Advanced Features
@@ -670,17 +665,6 @@ const UserWithHooksFactory = UserFactory.beforeBuild((params) => ({
 });
 ```
 
-### JSON Schema Performance
-
-JSON Schema factories maintain excellent performance while providing additional flexibility:
-
-- **Single object generation**: ~2-3x overhead compared to manual factories
-- **Batch generation**: Minimal additional overhead due to schema reuse
-- **Factory creation**: ~50-100ms per schema (one-time cost)
-- **Memory usage**: Comparable to manual factories
-
-The performance overhead is typically negligible for testing use cases and is offset by the development time savings and reduced maintenance burden.
-
 **Supported JSON Schema Features:**
 
 - All basic types (string, number, integer, boolean, array, object, null)
@@ -689,101 +673,25 @@ The performance overhead is typically negligible for testing use cases and is of
 - String constraints (minLength, maxLength, pattern)
 - Array constraints (minItems, maxItems, uniqueItems)
 - Object constraints (required, additionalProperties)
-
-## Performance Benchmarks
-
-Interface-Forge, including JSON Schema factories, maintains excellent performance across all operations. Comprehensive benchmarks are available to help you understand the performance characteristics.
-
-### Benchmark Results
-
-**Single Object Generation (1,000 iterations):**
-
-- Manual Factory: ~12-15ms
-- JSON Schema Factory: ~25-35ms (~2-3x overhead)
-- Core Factory (basic): ~8-12ms
-
-**Batch Generation (1,000 objects):**
-
-- Manual Factory: ~45-60ms
-- JSON Schema Factory: ~55-75ms (minimal overhead)
-- Core Factory (basic): ~35-50ms
-
-**Factory Creation (one-time cost):**
-
-- Manual Factory: <1ms (instantaneous)
-- JSON Schema Factory: ~50-100ms (schema compilation)
-- Core Factory (basic): <1ms (instantaneous)
-
-**Memory Usage:**
-
-- All factory types have comparable memory footprints
-- JSON Schema factories cache compiled schemas for efficiency
-
-### Running Benchmarks
-
-Detailed performance benchmarks are available in multiple locations:
-
-**1. Test Suite Benchmarks:**
-
-```bash
-npm test
-# Look for "Performance Benchmarks" section in test output
-```
-
-Located in: `src/json-schema.spec.ts` (lines 454-620)
-
-**2. Example Benchmarks:**
-
-```bash
-npx tsx examples/07-json-schema-integration.ts
-# See "Example 8: Performance Comparison" in the output
-```
-
-Located in: `examples/07-json-schema-integration.ts` (lines 396-430)
-
-**3. Custom Benchmarks:**
-
-```typescript
-import { createFactoryFromJsonSchema } from 'interface-forge/json-schema';
-import { Factory } from 'interface-forge';
-
-// Benchmark your own schemas
-const iterations = 1000;
-
-// JSON Schema factory
-const SchemaFactory = await createFactoryFromJsonSchema(yourSchema);
-console.time('JSON Schema Factory');
-for (let i = 0; i < iterations; i++) {
-    SchemaFactory.build();
-}
-console.timeEnd('JSON Schema Factory');
-
-// Manual factory for comparison
-const ManualFactory = new Factory((faker) => ({
-    /* your manual implementation */
-}));
-console.time('Manual Factory');
-for (let i = 0; i < iterations; i++) {
-    ManualFactory.build();
-}
-console.timeEnd('Manual Factory');
-```
-
-### Performance Considerations
-
-- **Development vs Production**: The ~2-3x overhead is typically insignificant in testing scenarios
-- **Batch Operations**: Overhead diminishes significantly with batch generation
-- **Schema Complexity**: More complex schemas have slightly higher overhead
-- **Caching**: Schema compilation is cached, so repeated factory creation is faster
-- **Memory**: All factories maintain similar memory usage patterns
-
-The performance trade-off is generally worthwhile for the development velocity and schema consistency benefits.
-
 - Schema composition (allOf, anyOf, oneOf)
 - Enums and const values
 - Custom format generators
 - $ref resolution (basic support)
-- JSON Schema draft-07 and later
+
+**JSON Schema Version Support:**
+
+- ✅ **JSON Schema Draft-07** (2019) - Full support
+- ✅ **JSON Schema Draft 2019-09** - Full support
+- ✅ **JSON Schema Draft 2020-12** - Full support (latest)
+- ✅ **Schemas without explicit `$schema`** - Defaults to latest version
+
+**OpenAPI/Swagger Version Support:**
+
+- ✅ **OpenAPI 2.0 (Swagger)** - Extract schemas from `definitions`
+- ✅ **OpenAPI 3.0.x** - Extract schemas from `components.schemas`
+- ✅ **OpenAPI 3.1.x** - Full JSON Schema 2020-12 compatibility
+- ✅ **Response schemas** - Generate mock API responses
+- ⚠️ **$ref resolution** - Basic support (local references only)
 
 ## TypeScript Compatibility
 

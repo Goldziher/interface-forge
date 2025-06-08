@@ -20,12 +20,13 @@
  *
  * const UserFactory = await createFactoryFromJsonSchema(userSchema);
  * const user = UserFactory.build();
- * const users = UserFactory.buildMany(10);
+ * const users = UserFactory.batch(10);
  * ```
  */
 
 import type { Faker } from '@faker-js/faker';
 import type { ValidateFunction } from 'ajv';
+import { isArray, isDefined, isRecord } from '@tool-belt/type-predicates';
 import { Factory } from './index.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-plus-operands, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-unnecessary-condition */
@@ -84,31 +85,6 @@ export interface SchemaObject {
 }
 
 /**
- * Extended Factory class for JSON Schema with additional buildMany method
- * to match the API requirements
- */
-export class JsonSchemaFactory<T> extends Factory<T> {
-    /**
-     * Alias for batch() method to match JSON Schema API requirements.
-     * Generates an array of instances using the factory's schema.
-     *
-     * @param size Number of instances to generate
-     * @param kwargs Optional properties to override in generated instances
-     * @returns Array of generated instances
-     *
-     * @example
-     * ```typescript
-     * const UserFactory = await createFactoryFromJsonSchema(userSchema);
-     * const users = UserFactory.buildMany(10);
-     * const customUsers = UserFactory.buildMany(5, { isActive: true });
-     * ```
-     */
-    buildMany(size: number, kwargs?: Partial<T> | Partial<T>[]): T[] {
-        return this.batch(size, kwargs);
-    }
-}
-
-/**
  * JSON Schema format mappings to Faker.js methods
  */
 const FORMAT_MAPPINGS: Record<string, (faker: Faker) => string> = {
@@ -150,7 +126,7 @@ const FORMAT_MAPPINGS: Record<string, (faker: Faker) => string> = {
 export async function createFactoriesFromSchemas<T extends Record<string, any>>(
     schemas: T,
     options: JsonSchemaOptions = {},
-): Promise<{ [K in keyof T]: JsonSchemaFactory<any> }> {
+): Promise<{ [K in keyof T]: Factory<any> }> {
     const factoryEntries = await Promise.all(
         Object.entries(schemas).map(async ([name, schema]) => [
             name,
@@ -159,7 +135,7 @@ export async function createFactoriesFromSchemas<T extends Record<string, any>>(
     );
 
     return Object.fromEntries(factoryEntries) as {
-        [K in keyof T]: JsonSchemaFactory<any>;
+        [K in keyof T]: Factory<any>;
     };
 }
 
@@ -201,7 +177,7 @@ export async function createFactoriesFromSchemas<T extends Record<string, any>>(
 export async function createFactoryFromJsonSchema<T = any>(
     schema: any,
     options: JsonSchemaOptions = {},
-): Promise<JsonSchemaFactory<T>> {
+): Promise<Factory<T>> {
     // Load and setup AJV validator
     const ajv = await loadJsonSchemaValidator();
     let validator: null | ValidateFunction<T> = null;
@@ -215,7 +191,7 @@ export async function createFactoryFromJsonSchema<T = any>(
     }
 
     // Create the factory
-    const factory = new JsonSchemaFactory<T>(
+    const factory = new Factory<T>(
         (faker) => {
             let generated;
 
@@ -345,10 +321,7 @@ function createValueGenerator(
                     options,
                     depth + 1,
                 );
-                if (
-                    typeof resolvedSubSchema === 'object' &&
-                    !Array.isArray(resolvedSubSchema)
-                ) {
+                if (isRecord(resolvedSubSchema)) {
                     // Convert generated object back to schema-like structure
                     resolvedSubSchema = {
                         properties: Object.fromEntries(
@@ -372,7 +345,7 @@ function createValueGenerator(
             }
             if (
                 resolvedSubSchema.required &&
-                Array.isArray(resolvedSubSchema.required)
+                isArray(resolvedSubSchema.required)
             ) {
                 mergedSchema.required = [
                     ...new Set([
@@ -393,7 +366,7 @@ function createValueGenerator(
                 'enum',
             ];
             constraintKeys.forEach((key) => {
-                if (resolvedSubSchema[key] !== undefined) {
+                if (isDefined(resolvedSubSchema[key])) {
                     mergedSchema[key] = resolvedSubSchema[key];
                 }
             });
@@ -497,7 +470,7 @@ function generateArray(
     }
 
     // Handle tuple validation (array of schemas)
-    if (Array.isArray(schema.items)) {
+    if (isArray(schema.items)) {
         return schema.items.map((itemSchema: any) =>
             createValueGenerator(itemSchema, faker, options, depth + 1),
         );
@@ -602,20 +575,19 @@ function generateObject(
     // Handle additionalProperties
     if (
         schema.additionalProperties === true ||
-        typeof schema.additionalProperties === 'object'
+        isRecord(schema.additionalProperties)
     ) {
         const numAdditional = faker.number.int({ max: 2, min: 0 });
         for (let i = 0; i < numAdditional; i++) {
             const key = faker.lorem.word();
-            result[key] =
-                typeof schema.additionalProperties === 'object'
-                    ? createValueGenerator(
-                          schema.additionalProperties,
-                          faker,
-                          options,
-                          depth + 1,
-                      )
-                    : faker.lorem.word();
+            result[key] = isRecord(schema.additionalProperties)
+                ? createValueGenerator(
+                      schema.additionalProperties,
+                      faker,
+                      options,
+                      depth + 1,
+                  )
+                : faker.lorem.word();
         }
     }
 
