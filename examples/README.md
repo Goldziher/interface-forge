@@ -65,6 +65,28 @@ Learn how to use hooks for data transformation and validation:
 - Conditional logic in hooks
 - Error handling and business rules
 
+### [07. JSON Schema Integration](./07-json-schema-integration.ts)
+
+Automatically generate factories from JSON Schema definitions:
+
+- Creating factories from JSON Schema objects
+- Supporting all JSON Schema types and formats
+- Enhanced schema composition with `allOf`, `anyOf`, `oneOf`
+- Custom format generators for domain-specific data
+- OpenAPI/Swagger schema compatibility
+- Advanced `$ref` handling with recursion prevention
+- Data validation against original schemas
+- Performance benchmarking vs manual factories
+- Integration with existing Factory features
+- Batch generation with `buildMany()` for API compatibility
+- Real-world API testing scenarios
+
+**Note**: This example requires optional dependencies:
+
+```bash
+npm install ajv ajv-formats
+```
+
 ## Running the Examples
 
 To run any example:
@@ -73,12 +95,34 @@ To run any example:
 # Install dependencies
 npm install interface-forge
 
+# For JSON Schema integration example (07), also install:
+npm install ajv ajv-formats
+
 # Run with TypeScript
 npx tsx examples/01-basic-usage.ts
 
 # Or compile and run
 npx tsc examples/01-basic-usage.ts --outDir dist
 node dist/01-basic-usage.js
+```
+
+### JSON Schema Integration Usage
+
+The JSON Schema integration provides a powerful way to automatically generate factories:
+
+```typescript
+import { createFactoryFromJsonSchema } from 'interface-forge/json-schema';
+
+// Create factory from schema
+const UserFactory = await createFactoryFromJsonSchema(userSchema);
+
+// Generate data
+const user = UserFactory.build();
+const users = UserFactory.buildMany(100); // JSON Schema API compatible
+// Also available: UserFactory.batch(100) - legacy method
+
+// Validate generated data
+const validation = await validateGeneratedData(user, userSchema);
 ```
 
 ## Key Concepts
