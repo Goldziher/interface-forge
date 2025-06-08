@@ -12,6 +12,19 @@ export type FactoryFunction<T> = (
     iteration: number,
 ) => FactorySchema<T>;
 
+export interface FactoryOptions {
+    /**
+     * The locale data to use for this instance.
+     * If an array is provided, the first locale that has a definition for a given property will be used.
+     */
+    locale?: LocaleDefinition | LocaleDefinition[];
+    /**
+     * The Randomizer to use.
+     * Specify this only if you want to use it to achieve a specific goal,
+     * such as sharing the same random generator with other instances/tools.
+     */
+    randomizer?: Randomizer;
+}
 
 export type FactorySchema<T> = {
     [K in keyof T]:
@@ -20,12 +33,13 @@ export type FactorySchema<T> = {
     | T[K];
 };
 
+/**
 type AfterBuildHook<T> = (obj: T) => Promise<T> | T;
 
 type BeforeBuildHook<T> = (params: Partial<T>) => Partial<T> | Promise<Partial<T>>;
 /*
  * A reference to a function that returns a value of type `T`.
- * */
+ */
 class Ref<T, C extends (...args: unknown[]) => T> {
     private readonly args: Parameters<C>;
     private readonly handler: C;
@@ -56,19 +70,7 @@ export class Factory<T> extends Faker {
 
     constructor(
         factory: FactoryFunction<T>,
-        options?: {
-            /**
-             * The locale data to use for this instance.
-             * If an array is provided, the first locale that has a definition for a given property will be used.
-             */
-            locale?: LocaleDefinition | LocaleDefinition[];
-            /**
-             * The Randomizer to use.
-             * Specify this only if you want to use it to achieve a specific goal,
-             * such as sharing the same random generator with other instances/tools.
-             */
-            randomizer?: Randomizer;
-        },
+        options?: FactoryOptions,
     ) {
         super({
             locale: options?.locale ?? en,
@@ -324,9 +326,8 @@ export class Factory<T> extends Faker {
             return iterator.next().value;
         }
         if (isRecord(value)) {
-            const record = value as Record<string, unknown>;
             return Object.fromEntries(
-                Object.entries(record).map(([k, v]) => [k, this.parseValue(v)]),
+                Object.entries(value).map(([k, v]) => [k, this.parseValue(v)]),
             );
         }
         return value;
@@ -334,7 +335,7 @@ export class Factory<T> extends Faker {
 }
 
 /**
- *
+ * Converts an iterable to an array.
  * @param iterable The iterable to be converted to an array.
  * @returns An array containing the values of the iterable.
  */
@@ -347,10 +348,11 @@ function iterableToArray<T>(iterable: Iterable<T>): T[] {
 }
 
 /**
- *
- * @param target The target object to merge into
- * @param {...any} sources The source objects to merge
- * @returns T
+ * Deeply merges multiple objects into a target object.
+ * @template T The type of the target object.
+ * @param target The target object to merge into.
+ * @param sources The source objects to merge.
+ * @returns The merged object of type T.
  */
 function merge<T>(target: T, ...sources: unknown[]): T {
     const output: Partial<T> = { ...target };

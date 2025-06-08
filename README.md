@@ -7,7 +7,18 @@
 
 Interface-Forge is a TypeScript library for creating strongly typed mock data factories. This library builds upon [Faker.js](https://fakerjs.dev/) by providing a simple and intuitive `Factory` class that extends the `Faker` class from [Faker.js](https://fakerjs.dev/).
 
+## Features
+
+- 🏭 **Type-safe factories** - Generate mock data with full TypeScript support
+- 🎯 **Faker.js integration** - Built on top of the popular Faker.js library
+- 🔧 **Flexible API** - Support for custom generators, iterations, and sampling
+- 📋 **Zod integration** - Automatically generate factories from Zod schemas
+- 🎲 **Randomization control** - Deterministic generation with custom randomizers
+- 🌍 **Locale support** - Generate localized data using Faker.js locales
+
 ## Table of Contents
+
+
 
 - [Interface-Forge](#interface-forge)
     - [Table of Contents](#table-of-contents)
@@ -27,6 +38,7 @@ Interface-Forge is a TypeScript library for creating strongly typed mock data fa
     - [Contributing](#contributing)
     - [License](#license)
 
+
 ## Installation
 
 Choose your preferred package manager:
@@ -40,6 +52,21 @@ yarn add --dev interface-forge
 
 # pnpm
 pnpm add --save-dev interface-forge
+```
+
+### Optional: Zod Integration
+
+If you want to use the automatic factory generation from [Zod](https://zod.dev/) schemas, install Zod as well (it's declared as an optional peerDependency):
+
+```shell
+# npm
+npm install zod
+
+# yarn
+yarn add zod
+
+# pnpm
+pnpm add zod
 ```
 
 ## Basic Example
@@ -100,6 +127,27 @@ describe('User', () => {
     // ...
 });
 ```
+
+## Zod Integration (Optional)
+
+If you have Zod installed, you can automatically generate factories from Zod schemas:
+
+```typescript
+import { z } from 'zod';
+import { createFactoryFromZod } from 'interface-forge/zod';
+
+const UserSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email(),
+  age: z.number().int().min(18).max(100),
+});
+
+const UserFactory = createFactoryFromZod(UserSchema);
+const user = UserFactory.build();
+```
+
+For detailed documentation on Zod integration, see [docs/zod.md](docs/zod.md).
 
 ## API Reference
 
