@@ -13,11 +13,9 @@
  * npm install ajv ajv-formats
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
-
 import {
     createFactoriesFromSchemas,
-    createFactoryFromJsonSchema,
+    JsonSchemaFactory,
     JsonSchemaOptions,
     validateGeneratedData,
 } from '../src/json-schema.js';
@@ -80,7 +78,7 @@ async function runExamples(): Promise<void> {
         type: 'object',
     };
 
-    const UserFactory = await createFactoryFromJsonSchema(userSchema);
+    const UserFactory = await JsonSchemaFactory.create(userSchema);
 
     // Generate a single user
     const user = UserFactory.build() as Record<string, unknown>;
@@ -158,7 +156,7 @@ async function runExamples(): Promise<void> {
         type: 'object',
     };
 
-    const ProductFactory = await createFactoryFromJsonSchema(productSchema);
+    const ProductFactory = await JsonSchemaFactory.create(productSchema);
     const product = ProductFactory.build() as GeneratedProduct;
     console.log('Generated product:', JSON.stringify(product, null, 2));
 
@@ -204,7 +202,7 @@ async function runExamples(): Promise<void> {
         type: 'object',
     };
 
-    const ArticleFactory = await createFactoryFromJsonSchema(articleSchema);
+    const ArticleFactory = await JsonSchemaFactory.create(articleSchema);
     const article = ArticleFactory.build() as GeneratedArticle;
     console.log('Generated article:', JSON.stringify(article, null, 2));
 
@@ -264,7 +262,7 @@ async function runExamples(): Promise<void> {
     };
 
     const NotificationFactory =
-        await createFactoryFromJsonSchema(notificationSchema);
+        await JsonSchemaFactory.create(notificationSchema);
     const notifications = NotificationFactory.batch(3);
     console.log(
         'Generated notifications:',
@@ -298,10 +296,7 @@ async function runExamples(): Promise<void> {
     };
 
     const options: JsonSchemaOptions = { customFormats };
-    const CustomFactory = await createFactoryFromJsonSchema(
-        customSchema,
-        options,
-    );
+    const CustomFactory = await JsonSchemaFactory.create(customSchema, options);
     const customItems = CustomFactory.batch(3);
     console.log(
         'Generated items with custom formats:',
@@ -417,7 +412,7 @@ async function runExamples(): Promise<void> {
     };
 
     const APIResponseFactory =
-        await createFactoryFromJsonSchema(apiResponseSchema);
+        await JsonSchemaFactory.create(apiResponseSchema);
     const apiResponse = APIResponseFactory.build() as Record<string, unknown>;
     console.log(
         'Generated API response:',
@@ -507,9 +502,10 @@ async function runExamples(): Promise<void> {
     const UserWithHooksFactory = UserFactory.beforeBuild((params) => {
         console.log('Before build hook executed');
         return { ...params, isActive: true }; // Ensure all users are active
-    }).afterBuild((user) => {
+    }).afterBuild((user: unknown) => {
         console.log('After build hook executed');
-        user.processedAt = new Date().toISOString();
+        (user as Record<string, unknown>).processedAt =
+            new Date().toISOString();
         return user;
     });
 
@@ -537,7 +533,7 @@ async function runExamples(): Promise<void> {
     console.log(
         'Creating factory with self-referencing schema (tree structure)...',
     );
-    const TreeFactory = await createFactoryFromJsonSchema(treeNodeSchema, {
+    const TreeFactory = await JsonSchemaFactory.create(treeNodeSchema, {
         maxDepth: 3,
     });
     const trees = TreeFactory.batch(2);
@@ -574,7 +570,7 @@ async function runExamples(): Promise<void> {
     };
 
     console.log('Creating factory with enhanced allOf composition...');
-    const ComposedFactory = await createFactoryFromJsonSchema(
+    const ComposedFactory = await JsonSchemaFactory.create(
         advancedCompositionSchema,
     );
     const composedItems = ComposedFactory.batch(3);
@@ -605,7 +601,7 @@ async function runExamples(): Promise<void> {
     };
 
     console.log('Creating factory with recursive anyOf (recursion-safe)...');
-    const RecursiveFactory = await createFactoryFromJsonSchema(
+    const RecursiveFactory = await JsonSchemaFactory.create(
         recursiveAnyOfSchema,
         { maxDepth: 2 },
     );

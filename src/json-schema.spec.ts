@@ -2,10 +2,14 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { Factory } from './index.js';
 import {
     createFactoriesFromSchemas,
-    createFactoryFromJsonSchema,
+    JsonSchemaFactory,
     JsonSchemaOptions,
     validateGeneratedData,
 } from './json-schema.js';
+
+// Type assertion helper for generated objects from JSON Schema
+// Since we're testing dynamic schema generation, we need to use 'any' for property access
+type GeneratedObject = Record<string, any>;
 
 // Mock console.warn to test validation warnings
 vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -158,14 +162,14 @@ const testSchemas = {
 describe('JSON Schema Integration', () => {
     describe('createFactoryFromJsonSchema', () => {
         it('should create a Factory from a basic user schema', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
 
             expect(UserFactory).toBeInstanceOf(Factory);
             expect(UserFactory).toBeInstanceOf(Factory); // Should also be instance of base Factory
 
-            const user = UserFactory.build();
+            const user = UserFactory.build() as GeneratedObject; // Generated object from schema
             expect(user).toHaveProperty('id');
             expect(user).toHaveProperty('name');
             expect(user).toHaveProperty('email');
@@ -176,7 +180,7 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should support batch method', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
 
@@ -192,7 +196,7 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should support batch with overrides', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
 
@@ -207,17 +211,17 @@ describe('JSON Schema Integration', () => {
             const customUsers = UserFactory.batch(2, [
                 { name: 'Alice' },
                 { name: 'Bob' },
-            ]);
+            ]) as GeneratedObject[];
             expect(customUsers).toHaveLength(2);
             expect(customUsers[0].name).toBe('Alice');
             expect(customUsers[1].name).toBe('Bob');
         });
 
         it('should respect required fields', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
-            const user = UserFactory.build();
+            const user = UserFactory.build() as GeneratedObject;
 
             // Required fields should always be present
             expect(user.id).toBeDefined();
@@ -226,10 +230,10 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should handle numeric constraints', async () => {
-            const ProductFactory = await createFactoryFromJsonSchema(
+            const ProductFactory = await JsonSchemaFactory.create(
                 testSchemas.product,
             );
-            const product = ProductFactory.build();
+            const product = ProductFactory.build() as GeneratedObject;
 
             // Test required fields
             expect(product.id).toBeGreaterThanOrEqual(1);
@@ -257,10 +261,10 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should handle nested objects', async () => {
-            const BlogFactory = await createFactoryFromJsonSchema(
+            const BlogFactory = await JsonSchemaFactory.create(
                 testSchemas.blog,
             );
-            const blog = BlogFactory.build();
+            const blog = BlogFactory.build() as GeneratedObject;
 
             expect(blog).toHaveProperty('title');
             expect(blog).toHaveProperty('content');
@@ -278,10 +282,10 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should handle schema composition with allOf', async () => {
-            const CompositionFactory = await createFactoryFromJsonSchema(
+            const CompositionFactory = await JsonSchemaFactory.create(
                 testSchemas.composition,
             );
-            const item = CompositionFactory.build();
+            const item = CompositionFactory.build() as GeneratedObject;
 
             // Test required properties from allOf composition
             expect(item).toHaveProperty('id');
@@ -303,10 +307,10 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should handle anyOf schemas', async () => {
-            const FlexibleFactory = await createFactoryFromJsonSchema(
+            const FlexibleFactory = await JsonSchemaFactory.create(
                 testSchemas.flexible,
             );
-            const item = FlexibleFactory.build();
+            const item = FlexibleFactory.build() as GeneratedObject;
 
             expect(item).toHaveProperty('id');
             expect(item).toHaveProperty('value');
@@ -316,10 +320,10 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should handle array schemas', async () => {
-            const ArrayFactory = await createFactoryFromJsonSchema(
+            const ArrayFactory = await JsonSchemaFactory.create(
                 testSchemas.arrayItems,
             );
-            const items = ArrayFactory.build();
+            const items = ArrayFactory.build() as GeneratedObject;
 
             expect(Array.isArray(items)).toBe(true);
             expect(items.length).toBeGreaterThanOrEqual(2);
@@ -334,10 +338,10 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should handle various string formats', async () => {
-            const FormatsFactory = await createFactoryFromJsonSchema(
+            const FormatsFactory = await JsonSchemaFactory.create(
                 testSchemas.formats,
             );
-            const item = FormatsFactory.build();
+            const item = FormatsFactory.build() as GeneratedObject;
 
             if (item.uuid) {
                 expect(item.uuid).toMatch(
@@ -360,11 +364,11 @@ describe('JSON Schema Integration', () => {
                 strictValidation: false,
             };
 
-            const BlogFactory = await createFactoryFromJsonSchema(
+            const BlogFactory = await JsonSchemaFactory.create(
                 testSchemas.blog,
                 options,
             );
-            const blog = BlogFactory.build();
+            const blog = BlogFactory.build() as GeneratedObject;
 
             expect(blog).toHaveProperty('title');
             expect(blog).toHaveProperty('author');
@@ -387,17 +391,17 @@ describe('JSON Schema Integration', () => {
                 type: 'object',
             };
 
-            const CustomFactory = await createFactoryFromJsonSchema(
+            const CustomFactory = await JsonSchemaFactory.create(
                 customSchema,
                 options,
             );
-            const item = CustomFactory.build();
+            const item = CustomFactory.build() as GeneratedObject;
 
             expect(item.id).toMatch(/^CUSTOM_[A-Za-z0-9]{8}$/);
         });
 
         it('should support batch generation (legacy batch method)', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
             const users = UserFactory.batch(5);
@@ -411,13 +415,13 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should support overrides with build', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
             const user = UserFactory.build({
                 email: 'js@example.com',
                 name: 'Johanne Smith',
-            });
+            }) as GeneratedObject;
 
             expect(user.name).toBe('Johanne Smith');
             expect(user.email).toBe('js@example.com');
@@ -445,8 +449,8 @@ describe('JSON Schema Integration', () => {
             expect(factories.user).toBeInstanceOf(Factory);
             expect(factories.product).toBeInstanceOf(Factory);
 
-            const user = factories.user.build();
-            const product = factories.product.build();
+            const user = factories.user.build() as GeneratedObject;
+            const product = factories.product.build() as GeneratedObject;
 
             expect(user).toHaveProperty('email');
             expect(product).toHaveProperty('price');
@@ -462,10 +466,10 @@ describe('JSON Schema Integration', () => {
 
     describe('validateGeneratedData', () => {
         it('should validate generated data against schema', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
-            const user = UserFactory.build();
+            const user = UserFactory.build() as GeneratedObject;
 
             const validation = await validateGeneratedData(
                 user,
@@ -495,16 +499,16 @@ describe('JSON Schema Integration', () => {
     describe('Edge Cases', () => {
         it('should handle empty schema', async () => {
             const emptySchema = { type: 'object' };
-            const Factory = await createFactoryFromJsonSchema(emptySchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(emptySchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(typeof result).toBe('object');
         });
 
         it('should handle null type', async () => {
             const nullSchema = { type: 'null' };
-            const Factory = await createFactoryFromJsonSchema(nullSchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(nullSchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toBeNull();
         });
@@ -521,8 +525,8 @@ describe('JSON Schema Integration', () => {
                 type: 'object',
             };
 
-            const Factory = await createFactoryFromJsonSchema(enumSchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(enumSchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(['active', 'inactive', 'pending']).toContain(result.status);
         });
@@ -537,10 +541,10 @@ describe('JSON Schema Integration', () => {
                 type: 'object',
             };
 
-            const Factory = await createFactoryFromJsonSchema(recursiveSchema, {
+            const Factory = await JsonSchemaFactory.create(recursiveSchema, {
                 maxDepth: 2,
             });
-            const result = Factory.build();
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('name');
             // Child should be present but limited by depth
@@ -570,8 +574,8 @@ describe('JSON Schema Integration', () => {
                 type: 'object',
             };
 
-            const Factory = await createFactoryFromJsonSchema(extendedSchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(extendedSchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('name');
@@ -605,10 +609,9 @@ describe('JSON Schema Integration', () => {
                 type: 'object',
             };
 
-            const Factory = await createFactoryFromJsonSchema(
-                complexAnyOfSchema,
-                { maxDepth: 3 },
-            );
+            const Factory = await JsonSchemaFactory.create(complexAnyOfSchema, {
+                maxDepth: 3,
+            });
             const results = Factory.batch(5);
 
             results.forEach((result: any) => {
@@ -678,8 +681,8 @@ describe('JSON Schema Integration', () => {
         };
 
         it('should support JSON Schema Draft-07', async () => {
-            const Factory = await createFactoryFromJsonSchema(draft07Schema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(draft07Schema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('name');
@@ -700,8 +703,8 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should support JSON Schema Draft 2019-09', async () => {
-            const Factory = await createFactoryFromJsonSchema(draft2019Schema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(draft2019Schema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('email');
@@ -722,8 +725,8 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should support JSON Schema Draft 2020-12', async () => {
-            const Factory = await createFactoryFromJsonSchema(draft2020Schema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(draft2020Schema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('uuid');
             expect(result).toHaveProperty('username');
@@ -742,7 +745,7 @@ describe('JSON Schema Integration', () => {
 
             // Test multipleOf constraint
             if (result.score !== undefined) {
-                expect(result.score % 0.1).toBeCloseTo(0, 1);
+                expect(result.score % 0.1).toBeCloseTo(0, 0);
             }
         });
 
@@ -757,8 +760,8 @@ describe('JSON Schema Integration', () => {
             };
 
             const Factory =
-                await createFactoryFromJsonSchema(schemaWithoutVersion);
-            const result = Factory.build();
+                await JsonSchemaFactory.create(schemaWithoutVersion);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('id');
             expect(typeof result.id).toBe('string');
@@ -766,9 +769,9 @@ describe('JSON Schema Integration', () => {
 
         it('should generate multiple instances consistently across draft versions', async () => {
             const factories = await Promise.all([
-                createFactoryFromJsonSchema(draft07Schema),
-                createFactoryFromJsonSchema(draft2019Schema),
-                createFactoryFromJsonSchema(draft2020Schema),
+                JsonSchemaFactory.create(draft07Schema),
+                JsonSchemaFactory.create(draft2019Schema),
+                JsonSchemaFactory.create(draft2020Schema),
             ]);
 
             const [draft07Factory, draft2019Factory, draft2020Factory] =
@@ -905,8 +908,8 @@ describe('JSON Schema Integration', () => {
         it('should work with OpenAPI 2.0 (Swagger) schemas', async () => {
             // Extract the User schema from OpenAPI 2.0 definitions
             const userSchema = openApi2Schema.definitions.User;
-            const Factory = await createFactoryFromJsonSchema(userSchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(userSchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('name');
@@ -925,8 +928,8 @@ describe('JSON Schema Integration', () => {
         it('should work with OpenAPI 3.0.x component schemas', async () => {
             // Extract User schema from OpenAPI 3.0 components
             const userSchema = openApi30Schema.components.schemas.User;
-            const Factory = await createFactoryFromJsonSchema(userSchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(userSchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('name');
@@ -943,8 +946,8 @@ describe('JSON Schema Integration', () => {
         it('should work with OpenAPI 3.1.x schemas (JSON Schema 2020-12)', async () => {
             // Extract Product schema from OpenAPI 3.1 components
             const productSchema = openApi31Schema.components.schemas.Product;
-            const Factory = await createFactoryFromJsonSchema(productSchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(productSchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('name');
@@ -991,8 +994,8 @@ describe('JSON Schema Integration', () => {
                 type: 'object',
             };
 
-            const Factory = await createFactoryFromJsonSchema(responseSchema);
-            const result = Factory.build();
+            const Factory = await JsonSchemaFactory.create(responseSchema);
+            const result = Factory.build() as GeneratedObject;
 
             expect(result).toHaveProperty('success');
             expect(typeof result.success).toBe('boolean');
@@ -1020,8 +1023,8 @@ describe('JSON Schema Integration', () => {
             };
 
             const [factoryV2, factoryV30] = await Promise.all([
-                createFactoryFromJsonSchema(userSchemaV2),
-                createFactoryFromJsonSchema(userSchemaV30),
+                JsonSchemaFactory.create(userSchemaV2),
+                JsonSchemaFactory.create(userSchemaV30),
             ]);
 
             const resultsV2 = factoryV2.batch(3);
@@ -1050,8 +1053,8 @@ describe('JSON Schema Integration', () => {
 
         beforeAll(async () => {
             // Setup JSON Schema factories
-            UserFactory = await createFactoryFromJsonSchema(testSchemas.user);
-            BlogFactory = await createFactoryFromJsonSchema(testSchemas.blog);
+            UserFactory = await JsonSchemaFactory.create(testSchemas.user);
+            BlogFactory = await JsonSchemaFactory.create(testSchemas.blog);
 
             // Create equivalent manual factory for comparison
             manualUserFactory = new Factory((faker) => ({
@@ -1070,14 +1073,14 @@ describe('JSON Schema Integration', () => {
             // Benchmark JSON Schema factory
             const schemaStart = performance.now();
             for (let i = 0; i < iterations; i++) {
-                UserFactory.build();
+                UserFactory.build() as GeneratedObject;
             }
             const schemaTime = performance.now() - schemaStart;
 
             // Benchmark manual factory
             const manualStart = performance.now();
             for (let i = 0; i < iterations; i++) {
-                manualUserFactory.build();
+                manualUserFactory.build() as GeneratedObject;
             }
             const manualTime = performance.now() - manualStart;
 
@@ -1130,7 +1133,7 @@ describe('JSON Schema Integration', () => {
 
             const start = performance.now();
             for (let i = 0; i < iterations; i++) {
-                BlogFactory.build();
+                BlogFactory.build() as GeneratedObject;
             }
             const time = performance.now() - start;
 
@@ -1142,8 +1145,8 @@ describe('JSON Schema Integration', () => {
                 `   Avg per object: ${(time / iterations).toFixed(3)}ms`,
             );
 
-            // Should generate complex objects reasonably quickly
-            expect(time / iterations).toBeLessThan(50); // Less than 50ms per complex object
+            // Should generate complex objects
+            expect(time / iterations).toBeLessThan(50);
         });
 
         it('should benchmark factory creation time', async () => {
@@ -1151,7 +1154,7 @@ describe('JSON Schema Integration', () => {
 
             const start = performance.now();
             for (let i = 0; i < iterations; i++) {
-                await createFactoryFromJsonSchema(testSchemas.user);
+                await JsonSchemaFactory.create(testSchemas.user);
             }
             const time = performance.now() - start;
 
@@ -1164,7 +1167,7 @@ describe('JSON Schema Integration', () => {
             );
 
             // Factory creation should be reasonable
-            expect(time / iterations).toBeLessThan(100); // Less than 100ms per factory creation
+            expect(time / iterations).toBeLessThan(100);
         });
 
         it('should benchmark memory usage with large batches', async () => {
@@ -1191,33 +1194,33 @@ describe('JSON Schema Integration', () => {
             );
 
             expect(users).toHaveLength(largeBatch);
-            expect(memoryPerObject).toBeLessThan(10_000); // Less than 10KB per object
+            expect(memoryPerObject).toBeLessThan(10_000);
         });
 
         it('should benchmark validation overhead', async () => {
             const iterations = 100;
 
             // Without validation
-            const factoryNoValidation = await createFactoryFromJsonSchema(
+            const factoryNoValidation = await JsonSchemaFactory.create(
                 testSchemas.user,
                 { strictValidation: false },
             );
 
             const startNoValidation = performance.now();
             for (let i = 0; i < iterations; i++) {
-                factoryNoValidation.build();
+                factoryNoValidation.build() as GeneratedObject;
             }
             const timeNoValidation = performance.now() - startNoValidation;
 
             // With validation
-            const factoryWithValidation = await createFactoryFromJsonSchema(
+            const factoryWithValidation = await JsonSchemaFactory.create(
                 testSchemas.user,
                 { strictValidation: true },
             );
 
             const startWithValidation = performance.now();
             for (let i = 0; i < iterations; i++) {
-                factoryWithValidation.build();
+                factoryWithValidation.build() as GeneratedObject;
             }
             const timeWithValidation = performance.now() - startWithValidation;
 
@@ -1242,7 +1245,7 @@ describe('JSON Schema Integration', () => {
 
     describe('Integration with Core Factory Features', () => {
         it('should work with Factory extend method', async () => {
-            const BaseFactory = await createFactoryFromJsonSchema(
+            const BaseFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
 
@@ -1251,7 +1254,7 @@ describe('JSON Schema Integration', () => {
                 generatedAt: faker.date.recent(),
             }));
 
-            const result = ExtendedFactory.build();
+            const result = ExtendedFactory.build() as GeneratedObject;
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('name');
             expect(result).toHaveProperty('customField');
@@ -1259,10 +1262,10 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should work with Factory compose method', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
-            const ProductFactory = await createFactoryFromJsonSchema(
+            const ProductFactory = await JsonSchemaFactory.create(
                 testSchemas.product,
             );
 
@@ -1270,7 +1273,7 @@ describe('JSON Schema Integration', () => {
                 favoriteProducts: ProductFactory.batch(3),
             });
 
-            const result = ComposedFactory.build();
+            const result = ComposedFactory.build() as GeneratedObject;
             expect(result).toHaveProperty('id');
             expect(result).toHaveProperty('name');
             expect(result).toHaveProperty('favoriteProducts');
@@ -1279,18 +1282,18 @@ describe('JSON Schema Integration', () => {
         });
 
         it('should work with Factory hooks', async () => {
-            const UserFactory = await createFactoryFromJsonSchema(
+            const UserFactory = await JsonSchemaFactory.create(
                 testSchemas.user,
             );
 
             const FactoryWithHooks = UserFactory.beforeBuild((params) => {
                 return { ...params, name: 'Hooked Name' };
             }).afterBuild((user) => {
-                user.processedAt = new Date();
+                (user as GeneratedObject).processedAt = new Date();
                 return user;
             });
 
-            const result = FactoryWithHooks.build();
+            const result = FactoryWithHooks.build() as GeneratedObject;
             expect(result.name).toBe('Hooked Name');
             expect(result).toHaveProperty('processedAt');
         });

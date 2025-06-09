@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { createFactoryFromJsonSchema } from 'interface-forge/json-schema';
+ * import { JsonSchemaFactory } from 'interface-forge/json-schema';
  *
  * const userSchema = {
  *   type: 'object',
@@ -18,42 +18,47 @@
  *   required: ['id', 'name', 'email']
  * };
  *
- * const UserFactory = await createFactoryFromJsonSchema(userSchema);
+ * const UserFactory = await JsonSchemaFactory.create(userSchema);
  * const user = UserFactory.build();
  * const users = UserFactory.batch(10);
  * ```
  */
 
-import type { Faker } from '@faker-js/faker';
+import type { Faker, LocaleDefinition, Randomizer } from '@faker-js/faker';
 import type { ValidateFunction } from 'ajv';
 import { isArray, isDefined, isRecord } from '@tool-belt/type-predicates';
 import { Factory } from './index.js';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/restrict-plus-operands, @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-unnecessary-condition */
+/**
+ * Base factory options interface (extending core factory options)
+ */
+export interface FactoryOptions {
+    /**
+     * The locale data to use for this instance.
+     * If an array is provided, the first locale that has a definition for a given property will be used.
+     */
+    locale?: LocaleDefinition | LocaleDefinition[];
+    /**
+     * Maximum recursion depth for nested factory references.
+     * Default is 10. Set to 0 to disable nested generation.
+     */
+    maxDepth?: number;
+    /**
+     * The Randomizer to use.
+     * Specify this only if you want to use it to achieve a specific goal,
+     * such as sharing the same random generator with other instances/tools.
+     */
+    randomizer?: Randomizer;
+}
 
 /**
- * Configuration options for JSON Schema factory creation
+ * Configuration options for JSON Schema factory creation (extends base factory options)
  */
-export interface JsonSchemaOptions {
+export interface JsonSchemaOptions extends FactoryOptions {
     /**
      * Custom format generators for non-standard formats
      */
     customFormats?: Record<string, (faker: Faker) => string>;
-
-    /**
-     * Locale for faker data generation
-     *
-     * @default 'en'
-     */
-    locale?: string;
-
-    /**
-     * Maximum recursion depth for nested object generation
-     *
-     * @default 10
-     */
-    maxDepth?: number;
-
     /**
      * Enable strict validation of generated data against the schema
      *
@@ -63,45 +68,227 @@ export interface JsonSchemaOptions {
 }
 
 /**
- * Schema object with common JSON Schema properties
+ * JSON Schema interface with proper typing
  */
-export interface SchemaObject {
+interface JsonSchema {
+    // Allow additional properties for extensibility
     [key: string]: unknown;
+    // Schema metadata
     $ref?: string;
-    allOf?: SchemaObject[];
-    anyOf?: SchemaObject[];
+    $schema?: string;
+    // Object constraints
+    additionalProperties?: boolean | JsonSchema;
+    // Schema composition
+    allOf?: JsonSchema[];
+    anyOf?: JsonSchema[];
+    // Validation
+    const?: unknown;
+    // Metadata
+    default?: unknown;
+    description?: string;
+    // Validation
     enum?: unknown[];
+    examples?: unknown[];
+    // Number constraints
+    exclusiveMaximum?: number;
+    exclusiveMinimum?: number;
+    // String constraints
     format?: string;
-    items?: unknown;
+    // Array constraints
+    items?: JsonSchema | JsonSchema[];
+    // Number constraints
     maximum?: number;
+    maxItems?: number;
     maxLength?: number;
     minimum?: number;
+    minItems?: number;
     minLength?: number;
-    oneOf?: SchemaObject[];
+    multipleOf?: number;
+    // Schema composition
+    not?: JsonSchema;
+    oneOf?: JsonSchema[];
+    // String constraints
     pattern?: string;
-    properties?: Record<string, unknown>;
+    patternProperties?: Record<string, JsonSchema>;
+    // Object constraints
+    properties?: Record<string, JsonSchema>;
     required?: string[];
-    type?: string;
+    // Metadata
+    title?: string;
+    // Type definition
+    type?:
+        | 'array'
+        | 'boolean'
+        | 'integer'
+        | 'null'
+        | 'number'
+        | 'object'
+        | 'string';
+    // Array constraints
+    uniqueItems?: boolean;
 }
 
 /**
- * JSON Schema format mappings to Faker.js methods
+ * Type guard for checking if value has a number property
+ *
+ * @param obj - Object to check
+ * @param prop - Property name to check for
+ * @returns True if object has the number property
+ */
+function hasNumberProperty(
+    obj: unknown,
+    prop: string,
+): obj is Record<string, number> {
+    return isRecord(obj) && typeof obj[prop] === 'number';
+}
+
+/**
+ * Type guard for checking if value has a string property
+ *
+ * @param obj - Object to check
+ * @param prop - Property name to check for
+ * @returns True if object has the string property
+ */
+function hasStringProperty(
+    obj: unknown,
+    prop: string,
+): obj is Record<string, string> {
+    return isRecord(obj) && typeof obj[prop] === 'string';
+}
+
+/**
+ * Type guard to check if a value is a JsonSchema
+ *
+ * @param value - The value to check
+ * @returns True if the value is a JsonSchema object
+ */
+function isJsonSchema(value: unknown): value is JsonSchema {
+    return typeof value === 'object' && value !== null;
+}
+
+/**
+ * JSON Schema format mappings to Faker.js methods with proper typing
  */
 const FORMAT_MAPPINGS: Record<string, (faker: Faker) => string> = {
-    'date': (faker) => faker.date.recent().toISOString().split('T')[0],
-    'date-time': (faker) => faker.date.recent().toISOString(),
-    'email': (faker) => faker.internet.email(),
-    'hostname': (faker) => faker.internet.domainName(),
-    'ipv4': (faker) => faker.internet.ipv4(),
-    'ipv6': (faker) => faker.internet.ipv6(),
-    'password': (faker) => faker.internet.password(),
-    'regex': (faker) => faker.lorem.word(),
-    'time': (faker) => faker.date.recent().toTimeString().split(' ')[0],
-    'uri': (faker) => faker.internet.url(),
-    'uri-reference': (faker) => faker.internet.url(),
-    'url': (faker) => faker.internet.url(),
-    'uuid': (faker) => faker.string.uuid(),
-};
+    'date': (faker: Faker): string =>
+        faker.date.recent().toISOString().split('T')[0],
+    'date-time': (faker: Faker): string => faker.date.recent().toISOString(),
+    'email': (faker: Faker): string => faker.internet.email(),
+    'hostname': (faker: Faker): string => faker.internet.domainName(),
+    'ipv4': (faker: Faker): string => faker.internet.ipv4(),
+    'ipv6': (faker: Faker): string => faker.internet.ipv6(),
+    'password': (faker: Faker): string => faker.internet.password(),
+    'regex': (faker: Faker): string => faker.lorem.word(),
+    'time': (faker: Faker): string =>
+        faker.date.recent().toTimeString().split(' ')[0],
+    'uri': (faker: Faker): string => faker.internet.url(),
+    'uri-reference': (faker: Faker): string => faker.internet.url(),
+    'url': (faker: Faker): string => faker.internet.url(),
+    'uuid': (faker: Faker): string => faker.string.uuid(),
+} as const;
+
+/**
+ * Factory class for creating JSON Schema-based factories
+ */
+export class JsonSchemaFactory<T> extends Factory<T> {
+    private readonly jsonSchemaOptions: JsonSchemaOptions;
+    private readonly schema: unknown;
+
+    private constructor(
+        schema: unknown,
+        options: JsonSchemaOptions,
+        validator: null | ValidateFunction<T>,
+    ) {
+        super(
+            (faker) => {
+                let generated: unknown;
+
+                // Handle root-level schemas by type
+                if (isJsonSchema(schema) && schema.type === 'array') {
+                    generated = generateArray(schema, faker, options, 0);
+                } else if (isJsonSchema(schema) && schema.type === 'null') {
+                    generated = null;
+                } else {
+                    generated = createValueGenerator(schema, faker, options, 0);
+                }
+
+                // Validate if strict validation is enabled
+                if (validator && options.strictValidation) {
+                    const validationResult = validator(generated);
+                    const isValid =
+                        typeof validationResult === 'boolean'
+                            ? validationResult
+                            : Boolean(validationResult);
+                    if (!isValid) {
+                        console.warn(
+                            'Generated data does not match schema:',
+                            validator.errors,
+                        );
+                    }
+                }
+
+                return generated as T;
+            },
+            {
+                locale: options.locale,
+                maxDepth: options.maxDepth ?? 10,
+                randomizer: options.randomizer,
+            },
+        );
+
+        this.schema = schema;
+        this.jsonSchemaOptions = options;
+    }
+
+    /**
+     * Creates a JsonSchemaFactory instance from a JSON Schema definition
+     *
+     * @param schema - The JSON Schema object
+     * @param options - Configuration options for factory creation
+     * @returns A Promise that resolves to a JsonSchemaFactory instance
+     *
+     * @throws {Error} If the required peer dependencies are not installed
+     * @throws {Error} If the schema is invalid
+     */
+    static async create<T>(
+        schema: unknown,
+        options: JsonSchemaOptions = {},
+    ): Promise<JsonSchemaFactory<T>> {
+        // Load and setup AJV validator
+        const ajv = await loadJsonSchemaValidator();
+        let validator: null | ValidateFunction<T> = null;
+
+        if (options.strictValidation) {
+            try {
+                validator = ajv.compile<T>(
+                    schema as Parameters<typeof ajv.compile>[0],
+                );
+            } catch (error) {
+                throw new Error(`Invalid JSON Schema: ${String(error)}`);
+            }
+        }
+
+        return new JsonSchemaFactory<T>(schema, options, validator);
+    }
+
+    /**
+     * Gets the options used to create this factory
+     *
+     * @returns The options used to create this factory
+     */
+    getOptions(): JsonSchemaOptions {
+        return this.jsonSchemaOptions;
+    }
+
+    /**
+     * Gets the original schema used to create this factory
+     *
+     * @returns The original schema used to create this factory
+     */
+    getSchema(): unknown {
+        return this.schema;
+    }
+}
 
 /**
  * Utility function to create multiple factories from an object containing multiple schemas
@@ -109,121 +296,23 @@ const FORMAT_MAPPINGS: Record<string, (faker: Faker) => string> = {
  * @param schemas - Object mapping names to JSON schemas
  * @param options - Configuration options applied to all factories
  * @returns Promise resolving to object mapping names to Factory instances
- *
- * @example
- * ```typescript
- * const schemas = {
- *   user: userSchema,
- *   post: postSchema,
- *   comment: commentSchema
- * };
- *
- * const factories = await createFactoriesFromSchemas(schemas);
- * const user = factories.user.build();
- * const post = factories.post.build();
- * ```
  */
-export async function createFactoriesFromSchemas<T extends Record<string, any>>(
+export async function createFactoriesFromSchemas<
+    T extends Record<string, unknown>,
+>(
     schemas: T,
     options: JsonSchemaOptions = {},
-): Promise<{ [K in keyof T]: Factory<any> }> {
+): Promise<{ [K in keyof T]: Factory<unknown> }> {
     const factoryEntries = await Promise.all(
         Object.entries(schemas).map(async ([name, schema]) => [
             name,
-            await createFactoryFromJsonSchema(schema, options),
+            await JsonSchemaFactory.create(schema, options),
         ]),
     );
 
     return Object.fromEntries(factoryEntries) as {
-        [K in keyof T]: Factory<any>;
+        [K in keyof T]: Factory<unknown>;
     };
-}
-
-/**
- * Creates a Factory instance from a JSON Schema definition
- *
- * @param schema - The JSON Schema object
- * @param options - Configuration options for factory creation
- * @returns A Promise that resolves to a Factory instance
- *
- * @throws {Error} If the required peer dependencies are not installed
- * @throws {Error} If the schema is invalid
- *
- * @example
- * ```typescript
- * const userSchema = {
- *   type: 'object',
- *   properties: {
- *     id: { type: 'string', format: 'uuid' },
- *     name: { type: 'string', minLength: 1, maxLength: 100 },
- *     email: { type: 'string', format: 'email' },
- *     age: { type: 'integer', minimum: 0, maximum: 120 },
- *     isActive: { type: 'boolean' },
- *     tags: {
- *       type: 'array',
- *       items: { type: 'string' },
- *       minItems: 0,
- *       maxItems: 10
- *     }
- *   },
- *   required: ['id', 'name', 'email']
- * };
- *
- * const UserFactory = await createFactoryFromJsonSchema(userSchema);
- * const user = UserFactory.build();
- * const users = UserFactory.batch(10);
- * ```
- */
-export async function createFactoryFromJsonSchema<T = any>(
-    schema: any,
-    options: JsonSchemaOptions = {},
-): Promise<Factory<T>> {
-    // Load and setup AJV validator
-    const ajv = await loadJsonSchemaValidator();
-    let validator: null | ValidateFunction<T> = null;
-
-    if (options.strictValidation) {
-        try {
-            validator = ajv.compile<T>(schema);
-        } catch (error) {
-            throw new Error(`Invalid JSON Schema: ${error}`);
-        }
-    }
-
-    // Create the factory
-    const factory = new Factory<T>(
-        (faker) => {
-            let generated;
-
-            // Handle root-level schemas by type
-            if (schema.type === 'array') {
-                generated = generateArray(schema, faker, options, 0);
-            } else if (schema.type === 'null') {
-                generated = null;
-            } else {
-                generated = createValueGenerator(schema, faker, options, 0);
-            }
-
-            // Validate if strict validation is enabled
-            if (validator && options.strictValidation) {
-                const isValid = validator(generated);
-                if (!isValid) {
-                    // eslint-disable-next-line no-console
-                    console.warn(
-                        'Generated data does not match schema:',
-                        validator.errors,
-                    );
-                }
-            }
-
-            return generated as T;
-        },
-        {
-            maxDepth: options.maxDepth ?? 10,
-        },
-    );
-
-    return factory;
 }
 
 /**
@@ -233,16 +322,21 @@ export async function createFactoryFromJsonSchema<T = any>(
  * @param schema - The JSON schema to validate against
  * @returns Promise resolving to validation result
  */
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
-export async function validateGeneratedData<T>(
-    data: T,
-    schema: any,
-): Promise<{ errors?: any[]; valid: boolean }> {
+export async function validateGeneratedData(
+    data: unknown,
+    schema: unknown,
+): Promise<{ errors?: unknown[]; valid: boolean }> {
     const ajv = await loadJsonSchemaValidator();
 
     try {
-        const validator = ajv.compile<T>(schema);
-        const valid = validator(data);
+        const validator = ajv.compile(
+            schema as Parameters<typeof ajv.compile>[0],
+        );
+        const validationResult = validator(data);
+        const valid =
+            typeof validationResult === 'boolean'
+                ? validationResult
+                : Boolean(validationResult);
 
         return {
             errors: valid ? undefined : (validator.errors ?? []),
@@ -250,7 +344,7 @@ export async function validateGeneratedData<T>(
         };
     } catch (error) {
         return {
-            errors: [{ message: `Schema compilation error: ${error}` }],
+            errors: [{ message: `Schema compilation error: ${String(error)}` }],
             valid: false,
         };
     }
@@ -259,24 +353,28 @@ export async function validateGeneratedData<T>(
 /**
  * Converts a JSON Schema type to appropriate Faker.js generation logic
  *
- * @param schema
- * @param faker
- * @param options
- * @param depth
+ * @param schema - JSON Schema object
+ * @param faker - Faker instance
+ * @param options - Configuration options
+ * @param depth - Current recursion depth
  * @returns Generated value matching the schema type
  */
 function createValueGenerator(
-    schema: any,
+    schema: unknown,
     faker: Faker,
     options: JsonSchemaOptions = {},
     depth = 0,
-): any {
+): unknown {
+    if (!isJsonSchema(schema)) {
+        return faker.lorem.word();
+    }
+
     // Handle $ref references
-    if (schema.$ref) {
+    if (hasStringProperty(schema, '$ref')) {
         // Basic $ref handling - for self-references, generate simplified structure
         if (schema.$ref === '#' || schema.$ref === '#/') {
             // Self-reference - generate simplified version to prevent infinite recursion
-            if (depth >= (options.maxDepth || 10) / 2) {
+            if (depth >= (options.maxDepth ?? 10) / 2) {
                 return {}; // Return empty object for deep self-references
             }
             // Generate a simplified version of the root schema without $ref
@@ -291,7 +389,7 @@ function createValueGenerator(
         }
 
         // For other $refs, generate a placeholder with appropriate type
-        if (schema.type) {
+        if (hasStringProperty(schema, 'type')) {
             return createValueGenerator(
                 { type: schema.type },
                 faker,
@@ -304,52 +402,107 @@ function createValueGenerator(
     }
 
     // Handle schema composition
-    if (schema.allOf) {
-        const mergedSchema: any = {
+    if (isArray(schema.allOf)) {
+        const mergedSchema: JsonSchema = {
             properties: {},
             required: [],
-            type: schema.type ?? 'object',
+            type: 'object',
         };
 
+        // Set type if available in the schema
+        if (hasStringProperty(schema, 'type')) {
+            const validJsonSchemaTypes = [
+                'array',
+                'boolean',
+                'integer',
+                'null',
+                'number',
+                'object',
+                'string',
+            ] as const;
+            if (
+                validJsonSchemaTypes.includes(
+                    schema.type as (typeof validJsonSchemaTypes)[number],
+                )
+            ) {
+                mergedSchema.type = schema.type as JsonSchema['type'];
+            }
+        }
+
         for (const subSchema of schema.allOf) {
+            if (!isJsonSchema(subSchema)) {
+                continue;
+            }
+
             // Handle nested $refs in allOf
-            let resolvedSubSchema = subSchema;
-            if (subSchema.$ref) {
-                resolvedSubSchema = createValueGenerator(
+            let resolvedSubSchema: JsonSchema = subSchema;
+            if (hasStringProperty(subSchema, '$ref')) {
+                const generated = createValueGenerator(
                     subSchema,
                     faker,
                     options,
                     depth + 1,
                 );
-                if (isRecord(resolvedSubSchema)) {
-                    // Convert generated object back to schema-like structure
+                if (isRecord(generated)) {
+                    // Convert generated object back to schema-like structure with safe typing
+                    const properties: Record<string, JsonSchema> = {};
+                    for (const [key, value] of Object.entries(generated)) {
+                        const valueType = typeof value;
+                        if (
+                            ['boolean', 'number', 'object', 'string'].includes(
+                                valueType,
+                            )
+                        ) {
+                            properties[key] = {
+                                type:
+                                    valueType === 'object' && value === null
+                                        ? 'null'
+                                        : valueType === 'object' &&
+                                            Array.isArray(value)
+                                          ? 'array'
+                                          : (valueType as JsonSchema['type']),
+                            };
+                        }
+                    }
                     resolvedSubSchema = {
-                        properties: Object.fromEntries(
-                            Object.entries(resolvedSubSchema).map(
-                                ([key, value]) => [key, { type: typeof value }],
-                            ),
-                        ),
+                        properties,
                         type: 'object',
                     };
                 }
             }
 
-            if (resolvedSubSchema.type && !mergedSchema.type) {
-                mergedSchema.type = resolvedSubSchema.type;
+            if (
+                hasStringProperty(resolvedSubSchema, 'type') &&
+                !mergedSchema.type
+            ) {
+                const validJsonSchemaTypes = [
+                    'array',
+                    'boolean',
+                    'integer',
+                    'null',
+                    'number',
+                    'object',
+                    'string',
+                ] as const;
+                if (
+                    validJsonSchemaTypes.includes(
+                        resolvedSubSchema.type as (typeof validJsonSchemaTypes)[number],
+                    )
+                ) {
+                    mergedSchema.type =
+                        resolvedSubSchema.type as JsonSchema['type'];
+                }
             }
-            if (resolvedSubSchema.properties) {
+            if (isRecord(resolvedSubSchema.properties)) {
                 mergedSchema.properties = {
                     ...mergedSchema.properties,
                     ...resolvedSubSchema.properties,
                 };
             }
-            if (
-                resolvedSubSchema.required &&
-                isArray(resolvedSubSchema.required)
-            ) {
+            if (isArray(resolvedSubSchema.required)) {
                 mergedSchema.required = [
                     ...new Set([
-                        ...(mergedSchema.required || []),
+                        ...(mergedSchema.required ?? []),
                         ...resolvedSubSchema.required,
                     ]),
                 ];
@@ -389,13 +542,16 @@ function createValueGenerator(
         return createValueGenerator(mergedSchema, faker, options, depth);
     }
 
-    if (schema.anyOf || schema.oneOf) {
-        const schemas = schema.anyOf || schema.oneOf;
+    if (isArray(schema.anyOf) || isArray(schema.oneOf)) {
+        const schemas = schema.anyOf ?? schema.oneOf ?? [];
 
         // Filter out schemas that would cause infinite recursion
-        const validSchemas = schemas.filter((subSchema: any) => {
-            if (subSchema.$ref === '#' || subSchema.$ref === '#/') {
-                return depth < (options.maxDepth || 10) / 2;
+        const validSchemas = schemas.filter((subSchema: unknown) => {
+            if (
+                hasStringProperty(subSchema, '$ref') &&
+                (subSchema.$ref === '#' || subSchema.$ref === '#/')
+            ) {
+                return depth < (options.maxDepth ?? 10) / 2;
             }
             return true;
         });
@@ -438,7 +594,7 @@ function createValueGenerator(
         }
 
         default: {
-            if (schema.enum) {
+            if (isArray(schema.enum)) {
                 return faker.helpers.arrayElement(schema.enum);
             }
             return faker.lorem.word();
@@ -449,29 +605,33 @@ function createValueGenerator(
 /**
  * Generates array values based on JSON Schema constraints
  *
- * @param schema
- * @param faker
- * @param options
- * @param depth
+ * @param schema - JSON Schema object for array type
+ * @param faker - Faker instance
+ * @param options - Configuration options
+ * @param depth - Current recursion depth
  * @returns Array of generated values
  */
 function generateArray(
-    schema: any,
+    schema: JsonSchema,
     faker: Faker,
     options: JsonSchemaOptions,
     depth: number,
-): any[] {
-    const minItems = schema.minItems || 0;
-    const maxItems = schema.maxItems || Math.max(minItems + 5, 10);
+): unknown[] {
+    const minItems = hasNumberProperty(schema, 'minItems')
+        ? schema.minItems
+        : 0;
+    const maxItems = hasNumberProperty(schema, 'maxItems')
+        ? schema.maxItems
+        : Math.max(minItems + 5, 10);
     const length = faker.number.int({ max: maxItems, min: minItems });
 
-    if (!schema.items || depth >= (options.maxDepth || 10)) {
+    if (!isDefined(schema.items) || depth >= (options.maxDepth ?? 10)) {
         return [];
     }
 
     // Handle tuple validation (array of schemas)
     if (isArray(schema.items)) {
-        return schema.items.map((itemSchema: any) =>
+        return schema.items.map((itemSchema: unknown) =>
             createValueGenerator(itemSchema, faker, options, depth + 1),
         );
     }
@@ -485,18 +645,29 @@ function generateArray(
 /**
  * Generates numeric values based on JSON Schema constraints
  *
- * @param schema
- * @param faker
- * @param isInteger
+ * @param schema - JSON Schema object for number/integer type
+ * @param faker - Faker instance
+ * @param isInteger - Whether to generate integers
  * @returns Generated numeric value
  */
-function generateNumber(schema: any, faker: Faker, isInteger = false): number {
-    const min =
-        schema.minimum ??
-        (schema.exclusiveMinimum ? schema.exclusiveMinimum + 0.01 : 0);
-    const max =
-        schema.maximum ??
-        (schema.exclusiveMaximum ? schema.exclusiveMaximum - 0.01 : 1000);
+function generateNumber(
+    schema: JsonSchema,
+    faker: Faker,
+    isInteger = false,
+): number {
+    const exclusiveMin = hasNumberProperty(schema, 'exclusiveMinimum')
+        ? schema.exclusiveMinimum
+        : 0;
+    const min = hasNumberProperty(schema, 'minimum')
+        ? schema.minimum
+        : hasNumberProperty(schema, 'exclusiveMinimum')
+          ? exclusiveMin + 0.01
+          : 0;
+    const max = hasNumberProperty(schema, 'maximum')
+        ? schema.maximum
+        : hasNumberProperty(schema, 'exclusiveMaximum')
+          ? schema.exclusiveMaximum - 0.01
+          : 1000;
 
     if (isInteger) {
         return faker.number.int({
@@ -508,7 +679,7 @@ function generateNumber(schema: any, faker: Faker, isInteger = false): number {
     let value = faker.number.float({ max, min });
 
     // Handle multipleOf constraint
-    if (schema.multipleOf) {
+    if (hasNumberProperty(schema, 'multipleOf')) {
         value = Math.round(value / schema.multipleOf) * schema.multipleOf;
     }
 
@@ -518,29 +689,33 @@ function generateNumber(schema: any, faker: Faker, isInteger = false): number {
 /**
  * Generates object values based on JSON Schema constraints
  *
- * @param schema
- * @param faker
- * @param options
- * @param depth
+ * @param schema - JSON Schema object for object type
+ * @param faker - Faker instance
+ * @param options - Configuration options
+ * @param depth - Current recursion depth
  * @returns Generated object with properties
  */
 function generateObject(
-    schema: any,
+    schema: JsonSchema,
     faker: Faker,
     options: JsonSchemaOptions,
     depth: number,
-): Record<string, any> {
-    if (depth >= (options.maxDepth || 10)) {
+): Record<string, unknown> {
+    if (depth >= (options.maxDepth ?? 10)) {
         return {};
     }
 
-    const result: Record<string, any> = {};
-    const properties = schema.properties || {};
-    const required = schema.required || [];
+    const result: Record<string, unknown> = {};
+    const properties = isRecord(schema.properties) ? schema.properties : {};
+    const required = isArray(schema.required) ? schema.required : [];
 
     // Generate required properties
     for (const prop of required) {
-        if (properties[prop]) {
+        if (
+            typeof prop === 'string' &&
+            isRecord(properties) &&
+            prop in properties
+        ) {
             result[prop] = createValueGenerator(
                 properties[prop],
                 faker,
@@ -597,45 +772,54 @@ function generateObject(
 /**
  * Generates string values based on JSON Schema constraints
  *
- * @param schema
- * @param faker
- * @param options
+ * @param schema - JSON Schema object for string type
+ * @param faker - Faker instance
+ * @param options - Configuration options
  * @returns Generated string value
  */
 function generateString(
-    schema: any,
+    schema: JsonSchema,
     faker: Faker,
     options: JsonSchemaOptions,
 ): string {
-    // Handle format-specific generation
-    if (schema.format) {
-        const formatGenerator =
-            options.customFormats?.[schema.format] ||
-            FORMAT_MAPPINGS[schema.format];
-        if (formatGenerator) {
-            return formatGenerator(faker);
+    // Handle format-specific generation - Fixed version that addresses reviewer's concern
+    if (hasStringProperty(schema, 'format')) {
+        const customFormatter = options.customFormats?.[schema.format];
+        if (customFormatter) {
+            return customFormatter(faker);
+        }
+
+        if (schema.format in FORMAT_MAPPINGS) {
+            return FORMAT_MAPPINGS[schema.format](faker);
         }
     }
 
     // Handle pattern constraint
-    if (schema.pattern) {
+    if (hasStringProperty(schema, 'pattern')) {
         try {
             // For complex patterns, generate a simple string that might match
             // Full regex generation would require additional libraries
-            return faker.string.alphanumeric(schema.minLength || 5);
+            const minLength = hasNumberProperty(schema, 'minLength')
+                ? schema.minLength
+                : 5;
+            return faker.string.alphanumeric(minLength);
         } catch {
             return faker.lorem.word();
         }
     }
 
     // Handle enum values
-    if (schema.enum) {
-        return faker.helpers.arrayElement(schema.enum);
+    if (isArray(schema.enum)) {
+        return faker.helpers.arrayElement(schema.enum as string[]);
     }
 
     // Generate string with length constraints
-    const minLength = schema.minLength || 1;
-    const maxLength = schema.maxLength || Math.max(minLength + 20, 50);
+    const minLength = hasNumberProperty(schema, 'minLength')
+        ? schema.minLength
+        : 1;
+    const maxLength = hasNumberProperty(schema, 'maxLength')
+        ? schema.maxLength
+        : Math.max(minLength + 20, 50);
     const length = faker.number.int({ max: maxLength, min: minLength });
 
     return faker.lorem
