@@ -60,8 +60,8 @@ export function merge<T>(target: T, ...sources: unknown[]): T {
         }
 
         // If there are meaningful sources and target is not an object,
-        // we can't merge, so return the first meaningful source
-        return meaningfulSources[0] as T;
+        // we can't merge, so throw an error
+        throw new Error('Cannot merge objects into a non-object target');
     }
 
     const output = { ...target } as Record<string, unknown>;
