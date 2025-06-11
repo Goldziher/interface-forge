@@ -74,6 +74,24 @@ describe('Utils', () => {
             const source = { arr: [4, 5] };
             expect(merge(target, source)).toEqual({ arr: [4, 5] });
         });
+
+        it('throws error when trying to merge objects into non-object target', () => {
+            expect(() => merge('string', { prop: 'value' })).toThrow(
+                'Cannot merge objects into a non-object target',
+            );
+            expect(() => merge(42, { prop: 'value' })).toThrow(
+                'Cannot merge objects into a non-object target',
+            );
+            expect(() => merge(null, { prop: 'value' })).toThrow(
+                'Cannot merge objects into a non-object target',
+            );
+        });
+
+        it('returns non-object target when no meaningful sources to merge', () => {
+            expect(merge('string')).toBe('string');
+            expect(merge(42, null, undefined)).toBe(42);
+            expect(merge([1, 2, 3], {})).toEqual([1, 2, 3]);
+        });
     });
 
     describe('Ref', () => {

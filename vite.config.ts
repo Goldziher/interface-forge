@@ -10,14 +10,23 @@ const { name } = manifest as PackageJson;
 export default defineConfig({
     build: {
         lib: {
-            entry: path.resolve(__dirname, 'src/index.ts'),
-            fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
+            entry: {
+                'index': path.resolve(__dirname, 'src/index.ts'),
+                'json-schema': path.resolve(__dirname, 'src/json-schema.ts'),
+            },
+            fileName: (format, entryName) =>
+                `${entryName}.${format === 'es' ? 'mjs' : 'js'}`,
             formats: ['es', 'cjs'],
             name,
         },
         minify: true,
         rollupOptions: {
+            external: ['ajv', 'ajv-formats'],
             output: {
+                globals: {
+                    'ajv': 'Ajv',
+                    'ajv-formats': 'addFormats',
+                },
                 preserveModules: false,
             },
         },

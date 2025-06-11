@@ -47,10 +47,27 @@ export function iterableToArray<T>(iterable: Iterable<T>): T[] {
  * @returns New object with merged properties (target is not mutated)
  */
 export function merge<T>(target: T, ...sources: unknown[]): T {
+    // Handle special cases where target is not a mergeable object
+    if (!isRecord(target)) {
+        // For primitive types (null, arrays, etc.), if there are no meaningful sources to merge,
+        // return the target as-is
+        const mergableSources = sources.filter(
+            (source) => isRecord(source) && Object.keys(source).length > 0,
+        );
+
+        if (mergableSources.length === 0) {
+            return target;
+        }
+
+        // If there are meaningful sources and target is not an object,
+        // we can't merge, so throw an error
+        throw new Error('Cannot merge objects into a non-object target');
+    }
+
     const output = { ...target } as Record<string, unknown>;
 
     for (const source of sources) {
-        if (!source || typeof source !== 'object') {
+        if (!isRecord(source)) {
             continue;
         }
 
