@@ -29,9 +29,11 @@ jobs:
             - name: Build library
               run: pnpm build
             - name: Generate documentation
-              run: pnpm docs:all
+              run: |
+                  pnpm docs
+                  pnpm docs:markdown
             - name: Setup Pages
-              uses: actions/configure-pages@v4
+              uses: actions/configure-pages@v5
             - name: Upload HTML docs artifact
               uses: actions/upload-pages-artifact@v3
               with:
