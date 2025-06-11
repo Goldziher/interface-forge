@@ -111,10 +111,10 @@ node dist/01-basic-usage.js
 The JSON Schema integration provides a powerful way to automatically generate factories:
 
 ```typescript
-import { createFactoryFromJsonSchema } from 'interface-forge/json-schema';
+import { JsonSchemaFactory } from 'interface-forge/json-schema';
 
 // Create factory from schema
-const UserFactory = await createFactoryFromJsonSchema(userSchema);
+const UserFactory = await JsonSchemaFactory.create(userSchema);
 
 // Generate data
 const user = UserFactory.build();

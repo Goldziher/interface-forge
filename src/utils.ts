@@ -51,11 +51,11 @@ export function merge<T>(target: T, ...sources: unknown[]): T {
     if (!isRecord(target)) {
         // For primitive types (null, arrays, etc.), if there are no meaningful sources to merge,
         // return the target as-is
-        const meaningfulSources = sources.filter(
+        const mergableSources = sources.filter(
             (source) => isRecord(source) && Object.keys(source).length > 0,
         );
 
-        if (meaningfulSources.length === 0) {
+        if (mergableSources.length === 0) {
             return target;
         }
 

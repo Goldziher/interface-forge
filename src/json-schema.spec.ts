@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { Factory } from './index.js';
 import {
     createFactoriesFromSchemas,
@@ -11,8 +11,7 @@ import {
 // Since we're testing dynamic schema generation, we need to use 'any' for property access
 type GeneratedObject = Record<string, any>;
 
-// Mock console.warn to test validation warnings
-vi.spyOn(console, 'warn').mockImplementation(() => {});
+// Note: Console.warn was replaced with error throwing for strict validation failures
 
 /**
  * Test schemas for various scenarios

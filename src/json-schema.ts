@@ -68,10 +68,11 @@ export interface JsonSchemaOptions extends FactoryOptions {
 }
 
 /**
- * JSON Schema interface with proper typing
+ * JSON Schema interface compatible with ajv's SchemaObject and JSON Schema specification
+ * Extended with proper typing for the properties we use in this module
  */
 interface JsonSchema {
-    // Allow additional properties for extensibility
+    // Allow additional properties for extensibility (compatible with ajv's SchemaObject)
     [key: string]: unknown;
     // Schema metadata
     $ref?: string;
@@ -220,9 +221,8 @@ export class JsonSchemaFactory<T> extends Factory<T> {
                             ? validationResult
                             : Boolean(validationResult);
                     if (!isValid) {
-                        console.warn(
-                            'Generated data does not match schema:',
-                            validator.errors,
+                        throw new Error(
+                            `Generated data does not match schema: ${JSON.stringify(validator.errors)}`,
                         );
                     }
                 }
@@ -591,6 +591,13 @@ function createValueGenerator(
 
         case 'string': {
             return generateString(schema, faker, options);
+        }
+
+        case undefined: {
+            if (isArray(schema.enum)) {
+                return faker.helpers.arrayElement(schema.enum);
+            }
+            return faker.lorem.word();
         }
 
         default: {
