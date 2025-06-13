@@ -1,4 +1,5 @@
-import { Factory } from './index.js';
+import { Factory, PersistenceAdapter } from './index.js';
+import { describe, expect, it, vi } from 'vitest';
 
 interface TestObject {
     age?: number;
@@ -31,7 +32,6 @@ const defaults: ComplexObject = {
     value: null,
 };
 
-// Simulation of an asynchronous validation function
 async function validateUser(user: User): Promise<void> {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -701,6 +701,226 @@ describe('Factory class functionality', () => {
 
             expect(() => UserFactory.build()).toThrow(
                 'Incorrect type returned by hook',
+            );
+        });
+    });
+
+    describe('Persistence Adapters', () => {
+        interface TestUser {
+            email: string;
+            id: string;
+            name: string;
+        }
+
+        const userFactory = new Factory<TestUser>((faker) => ({
+            email: faker.internet.email(),
+            id: faker.string.uuid(),
+            name: faker.person.fullName(),
+        }));
+
+        describe('MongooseAdapter', () => {
+            it('creates a single document', async () => {
+                const mockModel = {
+                    create: vi
+                        .fn()
+                        .mockImplementation((data: any) =>
+                            Promise.resolve(data),
+                        ),
+                };
+
+                const factory = userFactory.persist({
+                    adapter: 'mongoose',
+                    model: mockModel,
+                });
+
+                const user = await factory.create();
+                expect(mockModel.create).toHaveBeenCalledWith(user);
+                expect(user).toEqual(
+                    expect.objectContaining({
+                        email: expect.any(String),
+                        id: expect.any(String),
+                        name: expect.any(String),
+                    }),
+                );
+            });
+
+            it('creates multiple documents', async () => {
+                const mockModel = {
+                    insertMany: vi
+                        .fn()
+                        .mockImplementation((docs: any[]) =>
+                            Promise.resolve(docs),
+                        ),
+                };
+
+                const factory = userFactory.persist({
+                    adapter: 'mongoose',
+                    model: mockModel,
+                });
+
+                const users = await factory.createMany(3);
+                expect(mockModel.insertMany).toHaveBeenCalledWith(users);
+                expect(users).toHaveLength(3);
+                users.forEach((user) => {
+                    expect(user).toEqual(
+                        expect.objectContaining({
+                            email: expect.any(String),
+                            id: expect.any(String),
+                            name: expect.any(String),
+                        }),
+                    );
+                });
+            });
+        });
+
+        describe('PrismaAdapter', () => {
+            it('creates a single record', async () => {
+                const mockModel = {
+                    create: vi
+                        .fn()
+                        .mockImplementation((data) => Promise.resolve(data)),
+                };
+
+                const factory = userFactory.persist({
+                    adapter: 'prisma',
+                    model: mockModel,
+                });
+
+                const user = await factory.create();
+                expect(mockModel.create).toHaveBeenCalledWith({ data: user });
+                expect(user).toEqual(
+                    expect.objectContaining({
+                        email: expect.any(String),
+                        id: expect.any(String),
+                        name: expect.any(String),
+                    }),
+                );
+            });
+
+            it('creates multiple records', async () => {
+                const mockModel = {
+                    createMany: vi
+                        .fn()
+                        .mockImplementation(({ data }: { data: TestUser[] }) =>
+                            Promise.resolve({ count: data.length }),
+                        ),
+                };
+
+                const factory = userFactory.persist({
+                    adapter: 'prisma',
+                    model: mockModel,
+                });
+
+                const users = await factory.createMany(3);
+                expect(mockModel.createMany).toHaveBeenCalledWith({
+                    data: users,
+                });
+                expect(users).toHaveLength(3);
+            });
+        });
+
+        describe('TypeORMAdapter', () => {
+            it('creates a single entity', async () => {
+                const mockRepository = {
+                    save: vi
+                        .fn()
+                        .mockImplementation((data: any) =>
+                            Promise.resolve(data),
+                        ),
+                };
+
+                const factory = userFactory.persist({
+                    adapter: 'typeorm',
+                    model: mockRepository,
+                });
+
+                const user = await factory.create();
+                expect(mockRepository.save).toHaveBeenCalledWith(user);
+                expect(user).toEqual(
+                    expect.objectContaining({
+                        email: expect.any(String),
+                        id: expect.any(String),
+                        name: expect.any(String),
+                    }),
+                );
+            });
+
+            it('creates multiple entities', async () => {
+                const mockRepository = {
+                    save: vi
+                        .fn()
+                        .mockImplementation((data: any) =>
+                            Promise.resolve(data),
+                        ),
+                };
+
+                const factory = userFactory.persist({
+                    adapter: 'typeorm',
+                    model: mockRepository,
+                });
+
+                const users = await factory.createMany(3);
+                expect(mockRepository.save).toHaveBeenCalledWith(users);
+                expect(users).toHaveLength(3);
+                users.forEach((user) => {
+                    expect(user).toEqual(
+                        expect.objectContaining({
+                            email: expect.any(String),
+                            id: expect.any(String),
+                            name: expect.any(String),
+                        }),
+                    );
+                });
+            });
+        });
+
+        describe('Custom Adapter', () => {
+            it('uses a custom persistence adapter', async () => {
+                const mockAdapter: PersistenceAdapter<TestUser> = {
+                    create: vi
+                        .fn()
+                        .mockImplementation((data: any) =>
+                            Promise.resolve(data),
+                        ),
+                    createMany: vi
+                        .fn()
+                        .mockImplementation((data: any) =>
+                            Promise.resolve(data),
+                        ),
+                };
+
+                const factory = userFactory.persist({
+                    adapter: mockAdapter,
+                    model: {}, // Not used for custom adapter
+                });
+
+                // Test single create
+                const user = await factory.create();
+                expect(mockAdapter.create).toHaveBeenCalledWith(user);
+                expect(user).toEqual(
+                    expect.objectContaining({
+                        email: expect.any(String),
+                        id: expect.any(String),
+                        name: expect.any(String),
+                    }),
+                );
+
+                // Test batch create
+                const users = await factory.createMany(2);
+                expect(mockAdapter.createMany).toHaveBeenCalledWith(users);
+                expect(users).toHaveLength(2);
+            });
+        });
+
+        it('throws error when no persistence adapter is configured', async () => {
+            const factory = new Factory<TestUser>((faker) => ({
+                email: faker.internet.email(),
+                id: faker.string.uuid(),
+                name: faker.person.fullName(),
+            }));
+
+            await expect(factory.create()).rejects.toThrow(
+                'No persistence adapter configured. Call persist() first.',
             );
         });
     });
