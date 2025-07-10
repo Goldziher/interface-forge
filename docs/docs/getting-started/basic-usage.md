@@ -75,6 +75,41 @@ const userFactory = new Factory<User>((faker) => ({
 }));
 ```
 
+## Context-Aware Factories
+
+Factory functions can inspect override values to generate more consistent data:
+
+```typescript
+interface User {
+    id: string;
+    name: string;
+    email: string;
+    age: number;
+    isMinor: boolean;
+}
+
+const userFactory = new Factory<User>((faker, iteration, kwargs) => {
+    // Use provided age or generate one
+    const age = kwargs?.age ?? faker.number.int({ min: 16, max: 65 });
+
+    return {
+        id: kwargs?.id ?? faker.string.uuid(),
+        name: kwargs?.name ?? faker.person.fullName(),
+        email: kwargs?.email ?? faker.internet.email(),
+        age,
+        // Depends on the actual age (provided or generated)
+        isMinor: age < 18,
+    };
+});
+
+// Generates consistent data
+const minor = userFactory.build({ age: 17 });
+// { age: 17, isMinor: true, ... }
+
+const adult = userFactory.build({ age: 25 });
+// { age: 25, isMinor: false, ... }
+```
+
 ## Working with Dates
 
 ```typescript

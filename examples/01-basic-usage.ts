@@ -47,6 +47,40 @@ const activeUsers = UserFactory.batch(3, {
 });
 console.log('Active users:', activeUsers);
 
+// Context-aware factory example
+interface Person {
+    age: number;
+    canDrive: boolean;
+    canVote: boolean;
+    name: string;
+}
+
+const PersonFactory = new Factory<Person>((factory, _iteration, kwargs) => {
+    // Use provided age or generate one
+    const age = kwargs?.age ?? factory.number.int({ max: 80, min: 0 });
+
+    return {
+        age,
+        canDrive: age >= 16, // Context-aware: depends on actual age
+        canVote: age >= 18, // Context-aware: depends on actual age
+        name: kwargs?.name ?? factory.person.fullName(),
+    };
+});
+
+console.log('\n=== Context-Aware Examples ===');
+
+const child = PersonFactory.build({ age: 10 });
+console.log('Child:', child);
+// { age: 10, canDrive: false, canVote: false, name: "..." }
+
+const teenager = PersonFactory.build({ age: 17 });
+console.log('Teenager:', teenager);
+// { age: 17, canDrive: true, canVote: false, name: "..." }
+
+const adult = PersonFactory.build({ age: 25 });
+console.log('Adult:', adult);
+// { age: 25, canDrive: true, canVote: true, name: "..." }
+
 const companyName = UserFactory.company.name();
 const futureDate = UserFactory.date.future();
-console.log('Company:', companyName, 'Future date:', futureDate);
+console.log('\nCompany:', companyName, 'Future date:', futureDate);

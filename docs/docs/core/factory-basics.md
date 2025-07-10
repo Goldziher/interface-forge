@@ -128,6 +128,34 @@ const postFactory = new Factory<Post>((faker) => ({
 userRef.set(userFactory.build());
 ```
 
+### Context-Aware Generation
+
+Factory functions can access override values through the optional `kwargs` parameter, enabling context-aware data generation:
+
+```typescript
+const userFactory = new Factory<User>((faker, iteration, kwargs) => {
+    // Use provided age or generate one
+    const age = kwargs?.age ?? faker.number.int({ min: 18, max: 80 });
+
+    return {
+        id: kwargs?.id ?? faker.string.uuid(),
+        name: kwargs?.name ?? faker.person.fullName(),
+        age,
+        // Context-aware: underAge depends on the actual age used
+        underAge: age < 18,
+        // Conditional generation based on age
+        driversLicense: age >= 16 ? faker.string.alphanumeric(8) : null,
+    };
+});
+
+// Generates consistent data
+const minor = userFactory.build({ age: 16 });
+// { age: 16, underAge: true, driversLicense: null, ... }
+
+const adult = userFactory.build({ age: 25 });
+// { age: 25, underAge: false, driversLicense: "A1B2C3D4", ... }
+```
+
 ### Conditional Generation
 
 ```typescript

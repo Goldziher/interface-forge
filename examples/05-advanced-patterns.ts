@@ -16,20 +16,25 @@ interface Task {
     title: string;
 }
 
-const TaskFactory = new Factory<Task>((faker) => {
-    const status = faker.helpers.arrayElement([
-        'todo',
-        'in-progress',
-        'done',
-    ] as const);
+const TaskFactory = new Factory<Task>((faker, _iteration, kwargs) => {
+    // Use provided status or generate one
+    const status =
+        kwargs?.status ??
+        faker.helpers.arrayElement(['todo', 'in-progress', 'done'] as const);
 
     return {
-        assignee: status === 'todo' ? undefined : faker.person.fullName(),
-        completedAt: status === 'done' ? faker.date.recent() : undefined,
-        dueDate: faker.date.future(),
-        id: faker.string.uuid(),
+        assignee:
+            status === 'todo'
+                ? undefined
+                : (kwargs?.assignee ?? faker.person.fullName()),
+        completedAt:
+            status === 'done'
+                ? (kwargs?.completedAt ?? faker.date.recent())
+                : undefined,
+        dueDate: kwargs?.dueDate ?? faker.date.future(),
+        id: kwargs?.id ?? faker.string.uuid(),
         status,
-        title: faker.lorem.sentence(),
+        title: kwargs?.title ?? faker.lorem.sentence(),
     };
 });
 
