@@ -91,6 +91,13 @@ Integrate Interface-Forge with Zod schemas across three examples:
 - Mock API responses
 - Integration with test frameworks
 
+### [12. Context-Aware Overrides](./12-context-aware-overrides.ts)
+
+Advanced factory functions that inspect kwargs to make decisions:
+
+- Use kwargs to create more realistic and consistent data
+- Pass context to factories and receive consistent data
+
 ## Running the Examples
 
 To run any example:

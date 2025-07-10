@@ -63,6 +63,7 @@ export type FactoryComposition<T> = {
 export type FactoryFunction<T> = (
     factory: Factory<T>,
     iteration: number,
+    kwargs?: Partial<T>,
 ) => FactorySchema<T> | Promise<FactorySchema<T>>;
 
 export interface FactoryOptions {
@@ -444,10 +445,11 @@ export class Factory<
     compose<U extends T>(composition: FactoryComposition<U>): Factory<U> {
         return new Factory<U>(
             isAsyncFunction(this.factory)
-                ? async (factory, iteration) => {
+                ? async (factory, iteration, kwargs) => {
                       const baseValues = (await this.factory(
                           factory as unknown as Factory<T>,
                           iteration,
+                          kwargs,
                       )) as unknown as FactorySchema<U>;
                       const composedValues = Object.fromEntries(
                           Object.entries(composition).map(
@@ -465,10 +467,11 @@ export class Factory<
                           ...composedValues,
                       } as FactorySchema<U>;
                   }
-                : (factory, iteration) => {
+                : (factory, iteration, kwargs) => {
                       const baseValues = this.factory(
                           factory as unknown as Factory<T>,
                           iteration,
+                          kwargs,
                       ) as unknown as FactorySchema<U>;
                       const composedValues = Object.fromEntries(
                           Object.entries(composition).map(
@@ -589,12 +592,13 @@ export class Factory<
      */
     extend<U extends T>(factoryFn: FactoryFunction<U>): Factory<U> {
         return new Factory<U>(
-            (factory, iteration) => {
+            (factory, iteration, kwargs) => {
                 const baseValues = this.factory(
                     factory as unknown as Factory<T>,
                     iteration,
+                    kwargs,
                 ) as unknown as FactorySchema<U>;
-                const extendedValues = factoryFn(factory, iteration);
+                const extendedValues = factoryFn(factory, iteration, kwargs);
                 if (
                     extendedValues instanceof Promise ||
                     baseValues instanceof Promise
@@ -638,10 +642,11 @@ export class Factory<
      */
     partial(): Factory<Partial<T>> {
         return new Factory<Partial<T>>(
-            (factory, iteration) => {
+            (factory, iteration, kwargs) => {
                 const fullValues = this.factory(
                     factory as unknown as Factory<T>,
                     iteration,
+                    kwargs,
                 );
                 if (fullValues instanceof Promise) {
                     return fullValues as Promise<FactorySchema<Partial<T>>>;
@@ -1098,7 +1103,7 @@ export class Factory<
         }
 
         const depthLimitedFactory = this.createDepthLimitedProxy(depth, false);
-        const defaults = this.factory(depthLimitedFactory, iteration);
+        const defaults = this.factory(depthLimitedFactory, iteration, kwargs);
 
         if (kwargs) {
             return merge(
@@ -1120,7 +1125,11 @@ export class Factory<
         }
 
         const depthLimitedFactory = this.createDepthLimitedProxy(depth, true);
-        const defaults = await this.factory(depthLimitedFactory, iteration);
+        const defaults = await this.factory(
+            depthLimitedFactory,
+            iteration,
+            kwargs,
+        );
 
         if (kwargs) {
             return merge(
