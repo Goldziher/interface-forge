@@ -16,6 +16,14 @@ Interface Forge is a TypeScript library for creating strongly typed mock data fa
 - **Zod Schema Integration**: Generate mock data directly from your Zod schemas.
 - **Extensible**: Customize and extend the library to fit your specific needs.
 
+## Support This Project
+
+If you find Interface Forge helpful, please consider sponsoring the development:
+
+<a href="https://github.com/sponsors/Goldziher"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github-sponsors" alt="Sponsor on GitHub" height="32"></a>
+
+Your support helps maintain and improve this library for the community! 🚀
+
 ## Getting Started
 
 To get started with Interface Forge, check out the [Installation](./getting-started/installation.md) guide.

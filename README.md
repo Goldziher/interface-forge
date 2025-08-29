@@ -12,6 +12,14 @@
 
 A TypeScript library for creating strongly typed mock data factories. Built on [Faker.js](https://fakerjs.dev/) with advanced composition patterns, database persistence, fixture caching, and optional [Zod](https://zod.dev/) schema integration.
 
+## Support This Project
+
+If you find interface-forge helpful, please consider sponsoring the development:
+
+<a href="https://github.com/sponsors/Goldziher"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github-sponsors" alt="Sponsor on GitHub" height="32"></a>
+
+Your support helps maintain and improve this library for the community! 🚀
+
 ## Features
 
 - **🔒 Type-Safe**: Full TypeScript support with compile-time validation
