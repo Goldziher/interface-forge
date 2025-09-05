@@ -47,7 +47,7 @@ jobs:
                   retention-days: 7
 
             - name: Comment on PR
-              uses: actions/github-script@v7
+              uses: actions/github-script@v8
               with:
                   script: |
                       const artifactName = `docs-preview-${{ github.event.number }}`;
