@@ -84,7 +84,7 @@ const BigIntSchema = z.object({
 });
 
 const multiFactory = new ZodFactory(BigIntSchema).withTypeHandlers({
-    ZodBigInt: () => BigInt(42),
+    ZodBigInt: () => 42n,
     ZodFunction: () => (x: any) => `processed: ${x}`,
 });
 

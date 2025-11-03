@@ -101,6 +101,7 @@ export default eslintTS.config(
             '@typescript-eslint/require-await': 'error',
             '@typescript-eslint/restrict-template-expressions': 'off',
             '@typescript-eslint/switch-exhaustiveness-check': 'warn',
+            '@typescript-eslint/unified-signatures': 'off',
             'curly': 'error',
             'eqeqeq': 'error',
             // JSDoc rules

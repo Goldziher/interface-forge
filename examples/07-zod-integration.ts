@@ -253,7 +253,7 @@ const TransformSchema = z.object({
     tags: z
         .array(z.string())
         .transform((arr) => [...new Set(arr)]) // Remove duplicates
-        .transform((arr) => arr.sort()), // Sort alphabetically
+        .transform((arr) => arr.toSorted()), // Sort alphabetically
 });
 
 // Note: Transformations are applied by Zod during parsing,

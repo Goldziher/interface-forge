@@ -1240,11 +1240,11 @@ describe('ZodFactory', () => {
 
             const factory = new ZodFactory(schema).withTypeHandler(
                 'ZodBigInt',
-                () => BigInt(999),
+                () => 999n,
             );
 
             const result = factory.build();
-            expect(result.id).toBe(BigInt(999));
+            expect(result.id).toBe(999n);
         });
 
         it('should register multiple type handlers', () => {
@@ -1254,12 +1254,12 @@ describe('ZodFactory', () => {
             });
 
             const factory = new ZodFactory(schema).withTypeHandlers({
-                ZodBigInt: () => BigInt(123),
+                ZodBigInt: () => 123n,
                 ZodUnknown: () => ({ custom: 'data' }),
             });
 
             const result = factory.build();
-            expect(result.id).toBe(BigInt(123));
+            expect(result.id).toBe(123n);
             expect(result.data).toEqual({ custom: 'data' });
         });
 

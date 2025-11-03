@@ -64,7 +64,7 @@ describe('Generators', () => {
                 sampled.add(gen.next().value);
             }
 
-            expect([...sampled].sort()).toEqual(['a', 'b', 'c']);
+            expect([...sampled].toSorted()).toEqual(['a', 'b', 'c']);
         });
 
         it('throws error for empty iterable', () => {
