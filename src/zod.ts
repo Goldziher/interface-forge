@@ -248,7 +248,7 @@ const schemaHelpers = {
      * @param schema
      * @returns The schema definition
      */
-    getDef(schema: ZodType  ): unknown {
+    getDef(schema: ZodType): unknown {
         const v4Def = getProperty(schema, ['_zod', 'def']);
         if (v4Def !== undefined) {
             return v4Def;
@@ -416,7 +416,7 @@ const hasZodV3Structure = (schema: unknown): schema is ZodV3Type => {
     return isObject(schema) && '_def' in schema;
 };
 
-const getSchemaTypeName = (schema: ZodType  ): string | undefined => {
+const getSchemaTypeName = (schema: ZodType): string | undefined => {
     if (hasZodV4Structure(schema)) {
         return (
             (schema._zod.def as { type?: string } | undefined)?.type ??
