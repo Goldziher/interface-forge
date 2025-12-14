@@ -196,12 +196,6 @@ export default eslintTS.config(
     },
     {
         files: ['examples/**/*.ts', 'examples/**/*.tsx'],
-        languageOptions: {
-            parserOptions: {
-                project: './examples/tsconfig.json',
-                tsconfigRootDir: __dirname,
-            },
-        },
         rules: {
             '@typescript-eslint/no-explicit-any': 'off',
             'n/no-unpublished-import': 'off',

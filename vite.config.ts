@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import { PackageJson } from 'type-fest';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import dts from 'vite-plugin-dts';
 
 import manifest from './package.json';
