@@ -36,7 +36,6 @@ jobs:
         with:
           node-version: "22"
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -51,6 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          unset NODE_AUTH_TOKEN || true
           VERSION="$(node -p "require('./package.json').version")"
           if npm view "interface-forge@${VERSION}" version >/dev/null 2>&1; then
             echo "interface-forge@${VERSION} is already published; skipping."
