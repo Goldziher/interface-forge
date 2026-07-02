@@ -15,9 +15,12 @@ pnpm clean
 pnpm docs:build
 ```
 
-The repository uses `prek` for git hooks. Install hooks with:
+Linting and formatting run through `poly`:
 
 ```bash
-prek install
-prek install --hook-type commit-msg
+poly lint .
+poly fmt --check .
+poly fmt --fix .
 ```
+
+poly runs in CI via the shared reusable validate workflow.

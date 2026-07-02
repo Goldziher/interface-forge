@@ -20,7 +20,6 @@ dist/
 
 # BEGIN ai-rulez (DO NOT EDIT - managed by ai-rulez)
 .agents/
-.ai-rulez/.generated-manifest.json
 .codex/
 .cursor/
 .gemini/
