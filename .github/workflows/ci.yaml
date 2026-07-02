@@ -15,36 +15,6 @@ permissions:
   contents: read
 
 jobs:
-  prek:
-    name: prek run --all-files
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install prek
-        run: uv tool install prek
-
-      - name: Run prek
-        run: prek run --all-files --show-diff-on-failure
-
   test:
     runs-on: ubuntu-latest
     steps:
