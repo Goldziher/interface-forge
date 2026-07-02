@@ -9,6 +9,7 @@ trim_trailing_whitespace = true
 [discovery]
 exclude = [
     "**/*.lock",
+    "**/*.min.js",
     "**/*.svg",
     "**/Cargo.lock",
     "**/go.sum",
@@ -56,6 +57,21 @@ trailing_commas = "all"
 indent_style = "space"
 indent_width = 4
 trailing_commas = "none"
+
+# oxc lint uses poly's curated default rule set. The former .oxlintrc.json rule
+# levels are NOT ported: poly's oxc emits its own code namespace (e.g.
+# `typescript/no-explicit-any`, not the eslint-style
+# `@typescript-eslint/no-explicit-any`), and oxlint categories/env/globals/plugins
+# are not expressible in poly. The one override worth preserving is the
+# .oxlintrc.json test/example relaxation of `no-explicit-any`, kept below in
+# poly's own code format so `poly lint` stays green on fixture-heavy test code.
+[per-file-ignores]
+"**/*.spec.ts" = ["typescript/no-explicit-any"]
+"**/*.spec.tsx" = ["typescript/no-explicit-any"]
+"**/*.test.ts" = ["typescript/no-explicit-any"]
+"**/*.test.tsx" = ["typescript/no-explicit-any"]
+"**/tests/**" = ["typescript/no-explicit-any"]
+"examples/**" = ["typescript/no-explicit-any"]
 
 [hooks]
 stages = ["pre-commit"]
