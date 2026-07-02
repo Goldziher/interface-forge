@@ -5,14 +5,7 @@ gitignore = true
 
 presets = ["claude", "gemini", "codex", "copilot", "cursor"]
 
-builtins = [
-  "typescript",
-  "testing",
-  "security",
-  "code-quality",
-  "git-workflow",
-  "default-commands",
-]
+builtins = ["typescript", "testing", "security", "code-quality", "git-workflow", "default-commands"]
 
 [header]
 style = "minimal"

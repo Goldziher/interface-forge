@@ -27,12 +27,7 @@
         "url": "https://github.com/Goldziher/interface-forge/issues"
     },
     "homepage": "https://github.com/Goldziher/interface-forge#readme",
-    "files": [
-        "dist",
-        "examples",
-        "LICENSE",
-        "README.md"
-    ],
+    "files": ["dist", "examples", "LICENSE", "README.md"],
     "main": "dist/index.js",
     "module": "dist/index.mjs",
     "types": "dist/index.d.ts",
@@ -63,8 +58,8 @@
     "scripts": {
         "build": "rimraf dist && vite build",
         "clean": "rimraf dist",
-        "format": "prek run oxfmt --all-files",
-        "lint": "prek run oxlint --all-files",
+        "format": "poly fmt --fix .",
+        "lint": "poly lint .",
         "prepublishOnly": "pnpm build",
         "test": "vitest run",
         "test:coverage": "vitest run --coverage",

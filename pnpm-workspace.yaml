@@ -1,6 +1,6 @@
 packages:
-  - 'docs'
-  - '.'
+  - "docs"
+  - "."
 allowBuilds:
   core-js: true
 minimumReleaseAge: 0

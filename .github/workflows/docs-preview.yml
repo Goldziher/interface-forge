@@ -1,52 +1,52 @@
 name: Documentation Preview
 
 on:
-    pull_request:
-        paths:
-            - 'docs/**'
-            - '.github/workflows/docs-preview.yml'
+  pull_request:
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs-preview.yml"
 
 permissions:
-    contents: read
-    pull-requests: write
+  contents: read
+  pull-requests: write
 
 jobs:
-    build-preview:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
+  build-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: '22'
-                  cache: 'pnpm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "pnpm"
 
-            - name: Install root dependencies
-              run: pnpm install --frozen-lockfile
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
 
-            - name: Build documentation
-              run: pnpm docs:build
+      - name: Build documentation
+        run: pnpm docs:build
 
-            - name: Upload artifact
-              uses: actions/upload-artifact@v7
-              with:
-                  name: docs-preview-${{ github.event.number }}
-                  path: ./docs/build
-                  retention-days: 7
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-preview-${{ github.event.number }}
+          path: ./docs/build
+          retention-days: 7
 
-            - name: Comment on PR
-              uses: actions/github-script@v8
-              with:
-                  script: |
-                      const artifactName = `docs-preview-${{ github.event.number }}`;
-                      github.rest.issues.createComment({
-                        issue_number: context.issue.number,
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        body: `📚 Documentation preview build completed!\n\n**Artifact:** \`${artifactName}\`\n**Retention:** 7 days\n\nYou can download the preview from the [Actions tab](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).`
-                      })
+      - name: Comment on PR
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const artifactName = `docs-preview-${{ github.event.number }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `📚 Documentation preview build completed!\n\n**Artifact:** \`${artifactName}\`\n**Retention:** 7 days\n\nYou can download the preview from the [Actions tab](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).`
+            })

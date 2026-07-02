@@ -4,58 +4,58 @@
  */
 
 .heroBanner {
-    padding: 6rem 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    background: var(--ifm-hero-background-color);
+  padding: 6rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--ifm-hero-background-color);
 }
 
 @media screen and (max-width: 996px) {
-    .heroBanner {
-        padding: 3rem 1rem;
-    }
+  .heroBanner {
+    padding: 3rem 1rem;
+  }
 }
 
 .heroLogo {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
 }
 
 .heroLogo img {
-    width: 180px;
-    height: 180px;
-    filter: drop-shadow(0 4px 20px rgba(46, 45, 54, 0.1));
-    animation: float 3s ease-in-out infinite;
+  width: 180px;
+  height: 180px;
+  filter: drop-shadow(0 4px 20px rgba(46, 45, 54, 0.1));
+  animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-[data-theme='dark'] .heroLogo img {
-    filter: drop-shadow(0 4px 20px rgba(152, 207, 227, 0.2));
+[data-theme="dark"] .heroLogo img {
+  filter: drop-shadow(0 4px 20px rgba(152, 207, 227, 0.2));
 }
 
 @media screen and (max-width: 996px) {
-    .heroLogo img {
-        width: 140px;
-        height: 140px;
-    }
+  .heroLogo img {
+    width: 140px;
+    height: 140px;
+  }
 }
 
 .buttons {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
 }
