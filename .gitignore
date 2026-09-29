@@ -18,15 +18,23 @@ docs/build/
 dist/
 
 # BEGIN ai-rulez (DO NOT EDIT - managed by ai-rulez)
-.agents/
+.agents/agents/
+.agents/skills/
 .ai-rulez/.generated-manifest.json
-.codex/
-.cursor/
-.gemini/
+.codex/agents/
+.codex/commands/
+.codex/config.toml
+.codex/plugins.json
+.codex/skills/
+.cursor/commands/
+.cursor/rules/
+.gemini/settings.json
 .github/agents/
 .github/commands/
 .github/copilot-instructions.md
 .github/skills/
 .mcp.json
+.opencode/agents/
+.opencode/skills/
 AGENTS.md
 # END ai-rulez
