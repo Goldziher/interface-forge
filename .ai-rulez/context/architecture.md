@@ -1,3 +1,11 @@
+---
+type: Concept
+title: Architecture
+x-ai-rulez:
+  kind: context
+  id: architecture
+---
+
 # Architecture
 
 Interface Forge is a TypeScript library for creating strongly typed mock data factories.

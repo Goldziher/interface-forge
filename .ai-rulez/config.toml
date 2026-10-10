@@ -1,9 +1,9 @@
-version = "4.0"
+version = "5.0"
 name = "interface-forge"
 description = "TypeScript library for creating strongly typed mock data factories using Faker.js and optional Zod schema integration"
 gitignore = true
 
-presets = ["claude", "gemini", "codex", "copilot", "cursor", "opencode"]
+presets = ["claude", "gemini", "codex", "copilot", "cursor", "opencode", "pi"]
 
 builtins = [
   "typescript",
@@ -16,6 +16,7 @@ builtins = [
 
 [header]
 style = "minimal"
+hashes = "full"
 
 [[includes]]
 name = "kreuzberg-core"

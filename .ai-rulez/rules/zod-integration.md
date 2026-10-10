@@ -1,3 +1,11 @@
+---
+type: Decision
+title: Zod Integration
+x-ai-rulez:
+  kind: rule
+  id: zod-integration
+---
+
 # Zod Integration
 
 - Zod v4 is imported from `zod/v4`.

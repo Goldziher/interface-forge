@@ -1,3 +1,11 @@
+---
+type: Decision
+title: Interface Forge Patterns
+x-ai-rulez:
+  kind: rule
+  id: interface-forge-patterns
+---
+
 # Interface Forge Patterns
 
 - Add tests for new behavior in the corresponding `.spec.ts` file.

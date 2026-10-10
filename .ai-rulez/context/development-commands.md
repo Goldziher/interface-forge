@@ -1,3 +1,11 @@
+---
+type: Concept
+title: Development Commands
+x-ai-rulez:
+  kind: context
+  id: development-commands
+---
+
 # Development Commands
 
 Use pnpm from the repository root.

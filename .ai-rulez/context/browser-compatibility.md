@@ -1,3 +1,11 @@
+---
+type: Concept
+title: Browser Compatibility
+x-ai-rulez:
+  kind: context
+  id: browser-compatibility
+---
+
 # Browser Compatibility
 
 Core factory functionality must work in both Node.js and browser environments.
