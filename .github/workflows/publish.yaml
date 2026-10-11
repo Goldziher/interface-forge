@@ -30,6 +30,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6.0.9
+        with:
+          version: 12.11.2
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -38,9 +40,6 @@ jobs:
           cache: "pnpm"
           registry-url: "https://registry.npmjs.org"
           token: ""
-
-      - name: Update npm (trusted publishing requires >= 11.5.1)
-        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -57,8 +56,8 @@ jobs:
           set -euo pipefail
           unset NODE_AUTH_TOKEN || true
           VERSION="$(node -p "require('./package.json').version")"
-          if npm view "interface-forge@${VERSION}" version >/dev/null 2>&1; then
+          if pnpm view "interface-forge@${VERSION}" version >/dev/null 2>&1; then
             echo "interface-forge@${VERSION} is already published; skipping."
             exit 0
           fi
-          npm publish --provenance --access public
+          pnpm publish --no-git-checks --provenance --access public

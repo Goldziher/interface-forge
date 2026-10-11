@@ -74,29 +74,29 @@
         "docs:serve": "pnpm --filter docs serve"
     },
     "devDependencies": {
-        "@microsoft/api-extractor": "^7.58.7",
-        "@prisma/client": "^7.8.0",
-        "@types/node": "^25.9.1",
-        "@vitest/coverage-v8": "^4.1.7",
-        "ai-rulez": "^4.2.1",
+        "@microsoft/api-extractor": "^7.59.4",
+        "@prisma/client": "^7.10.0",
+        "@types/node": "^26.6.5",
+        "@vitest/coverage-v8": "^5.0.3",
+        "ai-rulez": "^5.0.1",
         "ajv": "^8.20.0",
         "ajv-formats": "^3.0.1",
-        "docusaurus-plugin-typedoc": "^1.4.2",
-        "expect-type": "^1.3.0",
+        "docusaurus-plugin-typedoc": "^1.4.3",
+        "expect-type": "^1.4.0",
         "http-server": "^14.1.1",
-        "mongoose": "^9.6.3",
+        "mongoose": "^9.11.1",
         "rimraf": "^6.1.3",
-        "type-fest": "^5.6.0",
-        "typedoc": "^0.28.19",
-        "typedoc-plugin-markdown": "^4.11.0",
-        "typescript": "^6.0.3",
-        "vite": "^8.0.14",
-        "vite-plugin-dts": "^5.0.1",
-        "vitest": "^4.1.7",
-        "zod": "^4.4.3"
+        "type-fest": "^5.10.0",
+        "typedoc": "^0.28.20",
+        "typedoc-plugin-markdown": "^4.13.1",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.4",
+        "vite-plugin-dts": "^5.1.2",
+        "vitest": "^5.0.3",
+        "zod": "^4.6.5"
     },
     "dependencies": {
-        "@faker-js/faker": "^10.4.0",
+        "@faker-js/faker": "^10.6.0",
         "@tool-belt/type-predicates": "^1.4.1"
     },
     "peerDependencies": {
@@ -115,5 +115,5 @@
             "optional": true
         }
     },
-    "packageManager": "pnpm@11.4.0+sha512.f0febc7e37552ab485494a914241b338e0b3580b93d54ce31f00933015880863129038a1b4ae4e414a0ee63ac35bf21197e990172c4a68256450b5636310968f"
+    "packageManager": "pnpm@12.11.2"
 }

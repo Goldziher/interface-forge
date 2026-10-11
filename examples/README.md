@@ -104,16 +104,16 @@ To run any example:
 
 ```bash
 # Install dependencies
-npm install interface-forge
+pnpm add interface-forge
 
 # For Zod examples, also install Zod
-npm install zod
+pnpm add zod
 
 # Run with TypeScript
-npx tsx examples/01-basic-usage.ts
+pnpm exec tsx examples/01-basic-usage.ts
 
 # Or compile and run
-npx tsc examples/01-basic-usage.ts --outDir dist
+pnpm exec tsc examples/01-basic-usage.ts --outDir dist
 node dist/01-basic-usage.js
 ```
 

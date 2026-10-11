@@ -37,7 +37,7 @@ Your support helps maintain and improve this library for the community! 🚀
 
 ```bash
 # npm
-npm install --save-dev interface-forge
+pnpm add --save-dev interface-forge
 
 # yarn
 yarn add --dev interface-forge
@@ -46,10 +46,10 @@ yarn add --dev interface-forge
 pnpm add --save-dev interface-forge
 
 # For Zod integration (optional)
-npm install zod
+pnpm add zod
 
 # For JSON Schema integration (optional)
-npm install ajv ajv-formats
+pnpm add ajv ajv-formats
 ```
 
 ## Quick Start

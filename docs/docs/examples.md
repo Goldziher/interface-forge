@@ -75,5 +75,5 @@ const user = userFactory.build();
 ```bash
 git clone https://github.com/Goldziher/interface-forge.git
 cd interface-forge && pnpm install
-npx tsx examples/01-basic-usage.ts
+pnpm exec tsx examples/01-basic-usage.ts
 ```

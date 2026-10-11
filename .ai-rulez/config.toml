@@ -15,6 +15,10 @@ builtins = [
 ]
 
 [header]
+text = """AI-RULEZ :: GENERATED FILE — DO NOT EDIT
+Source: .ai-rulez/config.toml
+Edit .ai-rulez/ content and regenerate with pnpm dlx ai-rulez@5.0.1 generate.
+Use MCP server: pnpm dlx ai-rulez@5.0.1 mcp"""
 style = "minimal"
 hashes = "full"
 
@@ -33,8 +37,8 @@ merge_strategy = "local-override"
 [[mcp_servers]]
 name = "ai-rulez"
 description = "AI-Rulez MCP server for configuration management"
-command = "npx"
-args = ["-y", "ai-rulez@latest", "mcp"]
+command = "pnpm"
+args = ["dlx", "ai-rulez@5.0.1", "mcp"]
 
 [defaults]
 effort = "medium"
@@ -49,3 +53,6 @@ marketplace = "basemind"
 name = "basemind"
 scope = "project"
 enabled = true
+
+[mcp]
+self_server_command = ["pnpm", "dlx", "ai-rulez@5.0.1", "mcp"]
