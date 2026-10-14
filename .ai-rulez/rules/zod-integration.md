@@ -6,7 +6,7 @@ x-ai-rulez:
   id: zod-integration
 ---
 
-# Zod Integration
+## Zod Integration
 
 - Zod v4 is imported from `zod/v4`.
 - Zod v4 internals use `_zod.def`; do not use v3 `_def` for v4 logic.

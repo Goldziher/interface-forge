@@ -1,36 +1,24 @@
 version = "5.0"
+default_layers = ["plugins"]
 name = "interface-forge"
 description = "TypeScript library for creating strongly typed mock data factories using Faker.js and optional Zod schema integration"
 gitignore = true
 
 presets = ["claude", "gemini", "codex", "copilot", "cursor", "opencode", "pi"]
 
-builtins = [
-  "typescript",
-  "testing",
-  "security",
-  "code-quality",
-  "git-workflow",
-  "default-commands",
-]
-
-[header]
-text = """AI-RULEZ :: GENERATED FILE — DO NOT EDIT
-Source: .ai-rulez/config.toml
-Edit .ai-rulez/ content and regenerate with pnpm dlx ai-rulez@5.0.1 generate.
-Use MCP server: pnpm dlx ai-rulez@5.0.1 mcp"""
-style = "minimal"
-hashes = "full"
+builtins = ["typescript", "testing", "security", "code-quality", "!git-workflow", "default-commands"]
 
 [[includes]]
-name = "kreuzberg-core"
-source = "https://github.com/kreuzberg-dev/ai-rulez.git"
+name = "xberg-core"
+source = "https://github.com/xberg-io/agent-conventions.git"
+ref = "adb0caa92c4d8155fb1680618f72a321a832660b"
 path = "modules/core"
 merge_strategy = "local-override"
 
 [[includes]]
-name = "kreuzberg-cicd"
-source = "https://github.com/kreuzberg-dev/ai-rulez.git"
+name = "xberg-cicd"
+source = "https://github.com/xberg-io/agent-conventions.git"
+ref = "adb0caa92c4d8155fb1680618f72a321a832660b"
 path = "modules/cicd"
 merge_strategy = "local-override"
 
@@ -38,21 +26,13 @@ merge_strategy = "local-override"
 name = "ai-rulez"
 description = "AI-Rulez MCP server for configuration management"
 command = "pnpm"
-args = ["dlx", "ai-rulez@5.0.1", "mcp"]
+args = ["dlx", "ai-rulez@5.3.0", "mcp"]
 
 [defaults]
 effort = "medium"
 
-[[marketplaces]]
-name = "basemind"
-source = "Goldziher/basemind"
-type = "github"
-
-[[plugins]]
-marketplace = "basemind"
-name = "basemind"
-scope = "project"
-enabled = true
-
 [mcp]
-self_server_command = ["pnpm", "dlx", "ai-rulez@5.0.1", "mcp"]
+self_server_command = ["pnpm", "dlx", "ai-rulez@5.3.0", "mcp"]
+
+[lock]
+include_outputs = false

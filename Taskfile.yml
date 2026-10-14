@@ -10,25 +10,26 @@ tasks:
     desc: Install dependencies and git hooks
     cmds:
       - pnpm install
-      - prek install
-      - prek install --hook-type commit-msg
+      - poly hooks update
+      - poly hooks install
 
   update:
     desc: Update dependencies, pre-commit hooks, and AI rules
     cmds:
       - pnpm up --latest -r
-      - prek autoupdate
-      - pnpm ai-rulez generate
+      - poly hooks update
+      - ai-rulez generate --no-local --strict-config
 
   lint:
-    desc: Run all prek hooks
+    desc: Run Poly lint and format checks
     cmds:
-      - prek run --all-files
+      - poly lint .
+      - poly fmt --check .
 
   format:
     desc: Format JavaScript, TypeScript, JSON, and CSS
     cmds:
-      - prek run oxfmt --all-files
+      - poly fmt .
 
   typecheck:
     desc: Type-check the package

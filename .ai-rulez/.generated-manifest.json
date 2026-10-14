@@ -149,5 +149,43 @@
     ".pi/mcp.json": [],
     ".vscode/mcp.json": [],
     "opencode.json": []
+  },
+  "servers": {
+    ".codex/config.toml": [
+      [
+        "mcp_servers",
+        "ai-rulez"
+      ]
+    ],
+    ".cursor/mcp.json": [
+      [
+        "mcpServers",
+        "ai-rulez"
+      ]
+    ],
+    ".gemini/settings.json": [
+      [
+        "mcpServers",
+        "ai-rulez"
+      ]
+    ],
+    ".mcp.json": [
+      [
+        "mcpServers",
+        "ai-rulez"
+      ]
+    ],
+    ".pi/mcp.json": [
+      [
+        "mcpServers",
+        "ai-rulez"
+      ]
+    ],
+    "opencode.json": [
+      [
+        "mcp",
+        "ai-rulez"
+      ]
+    ]
   }
 }

@@ -6,7 +6,7 @@ x-ai-rulez:
   id: development-commands
 ---
 
-# Development Commands
+## Development Commands
 
 Use pnpm from the repository root.
 
@@ -23,9 +23,9 @@ pnpm clean
 pnpm docs:build
 ```
 
-The repository uses `prek` for git hooks. Install hooks with:
+The repository uses `poly` for git hooks. Install hooks with:
 
 ```bash
-prek install
-prek install --hook-type commit-msg
+poly hooks update
+poly hooks install
 ```

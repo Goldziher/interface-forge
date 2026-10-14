@@ -1,0 +1,20 @@
+[defaults]
+line_length = 120
+
+[hooks]
+stages = ["pre-commit"]
+
+[hooks.builtin]
+lint = true
+fmt = true
+commit = { stages = ["commit-msg"] }
+file_safety = true
+
+[[hooks.sources]]
+id = "ai-rulez"
+git = "https://github.com/Goldziher/ai-rulez.git"
+revision = "v5.3.0"
+hooks = ["ai-rulez-validate"]
+
+[discovery]
+exclude = [".ai-rulez/.generated-manifest*.json"]

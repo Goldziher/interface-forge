@@ -6,7 +6,7 @@ x-ai-rulez:
   id: interface-forge-patterns
 ---
 
-# Interface Forge Patterns
+## Interface Forge Patterns
 
 - Add tests for new behavior in the corresponding `.spec.ts` file.
 - Keep strict TypeScript compatibility and avoid `any` in production code.

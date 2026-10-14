@@ -6,7 +6,7 @@ x-ai-rulez:
   id: browser-compatibility
 ---
 
-# Browser Compatibility
+## Browser Compatibility
 
 Core factory functionality must work in both Node.js and browser environments.
 
