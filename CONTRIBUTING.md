@@ -10,7 +10,7 @@ This package is open to contributions. To contribute, please follow these steps:
 
 ## AI governance
 
-Install ai-rulez 5.3.0 and Poly, then run `poly hooks update` and `poly hooks install`.
+Install ai-rulez 5.3.0 and Poly, then run `task governance:hooks`.
 Installing governance hooks requires Python 3.11 or newer. CI uses the reviewed
 5.3.0 source revision `1dd46d774f156f3d170ecd1b702598b12d1eaf5b`.
 
