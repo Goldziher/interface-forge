@@ -14,6 +14,6 @@ jobs:
         with:
           ai-rulez-version: "5.3.0"
           source-revision: "bdabc8a6e9211de60ca1e4ad76225ac92fcf218f"
-      - uses: xberg-io/actions/validate-ai-rulez@98adf87f1ed4c62a57ff56f9010d62faf42d4db6
+      - uses: xberg-io/actions/validate-ai-rulez@d7a9c1a34abcfb73b61c467bf4cdd9d0830d6d6c
         with:
           expected-config-count: "1"
