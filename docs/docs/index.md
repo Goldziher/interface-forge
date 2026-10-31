@@ -20,6 +20,7 @@ Interface Forge is a TypeScript library for creating strongly typed mock data fa
 
 If you find Interface Forge helpful, please consider sponsoring the development:
 
+<!-- rumdl-disable-next-line MD033 -- sized sponsor button -->
 <a href="https://github.com/sponsors/Goldziher"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github-sponsors" alt="Sponsor on GitHub" height="32" /></a>
 
 Your support helps maintain and improve this library for the community! 🚀

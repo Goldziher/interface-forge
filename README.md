@@ -1,3 +1,4 @@
+<!-- rumdl-disable MD033 MD041 -- centered logo header; GitHub Markdown has no centering syntax -->
 <div align="center">
   <img src="https://raw.githubusercontent.com/Goldziher/interface-forge/main/assets/logo.svg" alt="Interface-Forge Logo" width="120" height="120">
 
@@ -9,6 +10,7 @@
 [![Downloads](https://img.shields.io/npm/dm/interface-forge.svg)](https://www.npmjs.com/package/interface-forge)
 
 </div>
+<!-- rumdl-enable MD033 MD041 -->
 
 A TypeScript library for creating strongly typed mock data factories. Built on [Faker.js](https://fakerjs.dev/) with advanced composition patterns, database persistence, fixture caching, and optional [Zod](https://zod.dev/) and JSON Schema integration.
 
@@ -16,6 +18,7 @@ A TypeScript library for creating strongly typed mock data factories. Built on [
 
 If you find interface-forge helpful, please consider sponsoring the development:
 
+<!-- rumdl-disable-next-line MD033 -- sized sponsor button -->
 <a href="https://github.com/sponsors/Goldziher"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github-sponsors" alt="Sponsor on GitHub" height="32"></a>
 
 Your support helps maintain and improve this library for the community! 🚀
