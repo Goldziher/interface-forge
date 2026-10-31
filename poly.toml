@@ -8,13 +8,17 @@ stages = ["pre-commit"]
 lint = true
 fmt = true
 commit = { stages = ["commit-msg"] }
-file_safety = true
+# pnpm-lock.yaml is over poly's 500 KiB default. ~keep
+file_safety = { max_added_file_kb = 1000 }
 
 [[hooks.sources]]
 id = "ai-rulez"
 git = "https://github.com/Goldziher/ai-rulez.git"
-revision = "v5.3.0"
+revision = "v5"
 hooks = ["ai-rulez-validate"]
 
 [discovery]
 exclude = [".ai-rulez/.generated-manifest*.json"]
+
+[tools.actionlint]
+enabled = true
