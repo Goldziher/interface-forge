@@ -1,63 +1,57 @@
 name: Publish
 
 on:
-  push:
-    tags:
-      - "v*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to publish (e.g. v2.6.4)"
-        required: false
-        type: string
+    push:
+        tags:
+            - 'v*'
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: 'Tag to publish (e.g. v2.6.4)'
+                required: false
+                type: string
 
 permissions:
-  contents: read
-  id-token: write
+    contents: read
+    id-token: write
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
 
-      - name: Checkout requested tag
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.tag != '' }}
-        run: git checkout "${{ inputs.tag }}"
+            - name: Checkout requested tag
+              if: ${{ github.event_name == 'workflow_dispatch' && inputs.tag != '' }}
+              run: git checkout "${{ inputs.tag }}"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.0
-        with:
-          version: 12.11.2
+            # The tag checked out above may predate mise.toml; restore the config from this run's commit. ~keep
+            - name: Setup mise
+              uses: xberg-io/actions/setup-mise@v1
+              with:
+                  tools: node pnpm
+                  config-ref: ${{ github.sha }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
-          token: ""
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Build package
+              run: pnpm build
 
-      - name: Build package
-        run: pnpm build
+            - name: Run tests
+              run: pnpm test
 
-      - name: Run tests
-        run: pnpm test
-
-      - name: Publish to npm (trusted publishing)
-        shell: bash
-        run: |
-          set -euo pipefail
-          unset NODE_AUTH_TOKEN || true
-          VERSION="$(node -p "require('./package.json').version")"
-          if pnpm view "interface-forge@${VERSION}" version >/dev/null 2>&1; then
-            echo "interface-forge@${VERSION} is already published; skipping."
-            exit 0
-          fi
-          pnpm publish --no-git-checks --provenance --access public
+            - name: Publish to npm (trusted publishing)
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  unset NODE_AUTH_TOKEN || true
+                  VERSION="$(node -p "require('./package.json').version")"
+                  if pnpm view "interface-forge@${VERSION}" version >/dev/null 2>&1; then
+                    echo "interface-forge@${VERSION} is already published; skipping."
+                    exit 0
+                  fi
+                  pnpm publish --no-git-checks --provenance --access public

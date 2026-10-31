@@ -1,140 +1,112 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+    group: ci-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-  prek:
-    name: prek run --all-files
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+    toolchain:
+        name: Toolchain baseline
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
+            - name: Check toolchain
+              uses: xberg-io/actions/check-toolchain@v1
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.0
-        with:
-          version: 12.11.2
+    lint:
+        name: Lint
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: pnpm
+            - name: Setup mise
+              uses: xberg-io/actions/setup-mise@v1
+              with:
+                  tools: github:Goldziher/poly actionlint
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Lint
+              run: mise run lint
 
-      - name: Install prek
-        run: uv tool install prek
+            - name: Check formatting
+              run: mise run format:check
 
-      - name: Run prek
-        run: prek run --all-files --show-diff-on-failure
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+            - name: Setup mise
+              uses: xberg-io/actions/setup-mise@v1
+              with:
+                  tools: node pnpm
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.0
-        with:
-          version: 12.11.2
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: pnpm
+            - name: Run tests
+              run: mise run test
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+    typecheck:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
 
-      - name: Run tests
-        run: pnpm test
+            - name: Setup mise
+              uses: xberg-io/actions/setup-mise@v1
+              with:
+                  tools: node pnpm
 
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.0
-        with:
-          version: 12.11.2
+            - name: Run typecheck
+              run: mise run typecheck
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: pnpm
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Setup mise
+              uses: xberg-io/actions/setup-mise@v1
+              with:
+                  tools: node pnpm
 
-      - name: Run typecheck
-        run: pnpm typecheck
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+            - name: Build package
+              run: mise run build
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.0
-        with:
-          version: 12.11.2
+    docs:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: pnpm
+            - name: Setup mise
+              uses: xberg-io/actions/setup-mise@v1
+              with:
+                  tools: node pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Build package
-        run: pnpm build
-
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.1.0
-        with:
-          version: 12.11.2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build documentation
-        run: pnpm docs:build
+            - name: Build documentation
+              run: mise run docs:build
