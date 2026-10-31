@@ -19,8 +19,10 @@ dist/
 
 # BEGIN ai-rulez (DO NOT EDIT - managed by ai-rulez)
 .agents/skills/
+.ai-rulez/.config.local.*
 .ai-rulez/.generated-manifest.json
 .ai-rulez/.generated-manifest.local.json
+.ai-rulez/config.local.*
 .ai-rulez/local/
 .codex/agents/
 .codex/config.toml
@@ -32,14 +34,14 @@ dist/
 .github/agents/
 .github/prompts/iterate.prompt.md
 .github/prompts/parallelize.prompt.md
-.mcp.json
 .opencode/agents/
 .opencode/commands/
 .pi/agents/
 .pi/mcp.json
 .pi/prompts/
-AGENTS.md
-opencode.json
+/.mcp.json
+/AGENTS.md
+/opencode.json
 # END ai-rulez
 
 poly.local.toml

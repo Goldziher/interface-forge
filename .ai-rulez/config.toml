@@ -6,19 +6,30 @@ gitignore = true
 
 presets = ["claude", "gemini", "codex", "copilot", "cursor", "opencode", "pi"]
 
-builtins = ["typescript", "testing", "security", "code-quality", "!git-workflow", "default-commands"]
+# ~keep agent-workflow, test-alongside-code and tdd-workflow come from xberg-core instead.
+builtins = [
+    "typescript",
+    "testing",
+    "!testing/test-alongside-code",
+    "!testing/tdd-workflow",
+    "!ai-governance/agent-workflow",
+    "security",
+    "code-quality",
+    "!git-workflow",
+    "default-commands",
+]
 
 [[includes]]
 name = "xberg-core"
 source = "https://github.com/xberg-io/agent-conventions.git"
-ref = "adb0caa92c4d8155fb1680618f72a321a832660b"
+version = "^1"
 path = "modules/core"
 merge_strategy = "local-override"
 
 [[includes]]
 name = "xberg-cicd"
 source = "https://github.com/xberg-io/agent-conventions.git"
-ref = "adb0caa92c4d8155fb1680618f72a321a832660b"
+version = "^1"
 path = "modules/cicd"
 merge_strategy = "local-override"
 
