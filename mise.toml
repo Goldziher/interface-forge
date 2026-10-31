@@ -1,0 +1,10 @@
+# Versions follow the xberg-io/toolchains baseline named in toolchains.toml. ~keep
+[settings]
+lockfile = true
+lockfile_platforms = ["linux-x64", "linux-arm64", "macos-arm64", "windows-x64"]
+
+[tools]
+node = "26.12.1"
+pnpm = "12.15.0"
+"github:Goldziher/poly" = "0.31.2"
+actionlint = "1.7.12"
