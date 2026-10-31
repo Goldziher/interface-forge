@@ -88,7 +88,6 @@
     ".pi/agents/docs-writer.md",
     ".pi/agents/security-auditor.md",
     ".pi/agents/test-writer.md",
-    ".pi/mcp.json",
     ".pi/prompts/iterate.md",
     ".pi/prompts/parallelize.md",
     ".vscode/mcp.json",
@@ -102,7 +101,6 @@
     ".cursor/mcp.json": [],
     ".gemini/settings.json": [],
     ".mcp.json": [],
-    ".pi/mcp.json": [],
     ".vscode/mcp.json": [],
     "opencode.json": []
   },
@@ -119,19 +117,7 @@
         "ai-rulez"
       ]
     ],
-    ".gemini/settings.json": [
-      [
-        "mcpServers",
-        "ai-rulez"
-      ]
-    ],
     ".mcp.json": [
-      [
-        "mcpServers",
-        "ai-rulez"
-      ]
-    ],
-    ".pi/mcp.json": [
       [
         "mcpServers",
         "ai-rulez"

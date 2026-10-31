@@ -4,7 +4,7 @@
 version = 1
 ai_rulez_version = '5.9.7'
 scope = 'all'
-tree = 'sha256:15c76a1485f800443d1d61b07fa4b980fff8f54a3d9c07fe5958c3c0d9415598'
+tree = 'sha256:89401a02f03f91ca501ff4b63b50ce8a7450f1cba759a51950f0dc7b3208a185'
 
 [[include]]
 name = 'xberg-cicd'
@@ -193,8 +193,3 @@ kind = 'rule'
 id = 'zod-integration'
 path = 'rules/zod-integration.md'
 digest = 'sha256:f0361e3f179a3755fb88ff55e34b575da6efc37269af9129af8f396d0394ab6a'
-
-[[item]]
-kind = 'settings'
-id = 'mcp-servers'
-digest = 'sha256:b1b1d27f6096a2a197919e587a650770cc8fd0f7d1d73f5847e818d0d7356759'

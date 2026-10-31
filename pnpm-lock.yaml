@@ -185,9 +185,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^5.0.3
         version: 5.0.3(vitest@5.0.3)
-      ai-rulez:
-        specifier: ^5.0.1
-        version: 5.0.1
       ajv:
         specifier: ^8.20.0
         version: 8.20.0
@@ -2417,13 +2414,6 @@ packages:
   aggregate-error@3.1.0:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
-
-  ai-rulez@5.0.1:
-    resolution: {integrity: sha512-+gXLmdmnWv0yyhlowFRR0kylckdWryFFHEnAk+BmOALq+TC31aYzqYRwVW0wvjZRM9mnGAC6JdNohEnm0ZiWgQ==}
-    engines: {node: '>=22.0.0'}
-    cpu: [x64, arm64, ia32]
-    os: [darwin, linux, win32]
-    hasBin: true
 
   ajv-draft-04@1.0.0:
     resolution: {integrity: sha512-mv00Te6nmYbRp5DCwclxtt7yV/joXJPGS7nM+97GdxvuttCOfgI3K4U25zboyeX0O+myI8ERluxQe5wljMmVIw==}
@@ -9574,8 +9564,6 @@ snapshots:
     dependencies:
       clean-stack: 2.2.0
       indent-string: 4.0.0
-
-  ai-rulez@5.0.1: {}
 
   ajv-draft-04@1.0.0(ajv@8.20.0):
     optionalDependencies:

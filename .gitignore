@@ -37,7 +37,6 @@ dist/
 .opencode/agents/
 .opencode/commands/
 .pi/agents/
-.pi/mcp.json
 .pi/prompts/
 /.mcp.json
 /AGENTS.md
