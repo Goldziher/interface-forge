@@ -590,6 +590,69 @@ const isLengthEqualsCheck = createTypeGuard<$ZodCheckLengthEquals>((check): chec
 
 type SchemaGeneratorFunction = (generator: ZodSchemaGenerator, schema: $ZodType) => unknown;
 
+function collectNumberConstraints(checks: unknown[]): NumberConstraints {
+    const constraints: NumberConstraints = { isInt: false };
+
+    for (const check of checks) {
+        if (isLessThanCheck(check)) {
+            const inclusive = schemaHelpers.getCheckInclusive(check);
+            const value = schemaHelpers.getCheckValue(check);
+            if (typeof value === 'number') {
+                constraints.max = inclusive ? value : value - NUMBER_CONSTRAINTS.PRECISION_OFFSET;
+            }
+        } else if (isGreaterThanCheck(check)) {
+            const inclusive = schemaHelpers.getCheckInclusive(check);
+            const value = schemaHelpers.getCheckValue(check);
+            if (typeof value === 'number') {
+                constraints.min = inclusive ? value : value + NUMBER_CONSTRAINTS.PRECISION_OFFSET;
+            }
+        } else if (isMultipleOfCheck(check)) {
+            const value = schemaHelpers.getCheckValue(check);
+            if (typeof value === 'number') {
+                constraints.step = value;
+            }
+        } else if (isNumberFormatCheck(check)) {
+            const format = schemaHelpers.getCheckFormat(check);
+            if (format === 'int32' || format === 'uint32' || format === 'safeint') {
+                constraints.isInt = true;
+            }
+        } else if ((getProperty(check, ['kind']) as string | undefined) === 'int') {
+            constraints.isInt = true;
+        }
+    }
+
+    return constraints;
+}
+
+function resolveNumberBounds({ isInt, max, min, step }: NumberConstraints): { max: number; min: number } {
+    let safeMin: number;
+    if (min !== undefined && Number.isFinite(min)) {
+        safeMin = min;
+    } else if (step && min === undefined) {
+        safeMin = 0;
+    } else {
+        safeMin = isInt ? NUMBER_CONSTRAINTS.DEFAULT_INT_MIN : NUMBER_CONSTRAINTS.DEFAULT_MIN;
+    }
+
+    let safeMax: number;
+    if (max !== undefined && Number.isFinite(max)) {
+        safeMax = max;
+    } else {
+        safeMax = isInt ? NUMBER_CONSTRAINTS.DEFAULT_INT_MAX : NUMBER_CONSTRAINTS.DEFAULT_MAX;
+    }
+
+    return { max: safeMax, min: safeMin };
+}
+
+function roundToStep(value: number, step: number): number {
+    let result = Math.round(value / step) * step;
+    if (step < 1) {
+        const precision = Math.ceil(-Math.log10(step));
+        result = Math.round(result * Math.pow(10, precision)) / Math.pow(10, precision);
+    }
+    return Object.is(result, -0) ? 0 : result;
+}
+
 /**
  * Schema generator class that handles recursive generation of values from any ZodType.
  * This class is responsible for all the complex schema traversal and generation logic.
@@ -940,6 +1003,23 @@ class ZodSchemaGenerator {
     }
 
     private generateFromZodType(schema: ZodType, currentDepth: number): unknown {
+        const handlers = [
+            () => this.generateFromFormatOrPrimitive(schema),
+            () => this.generateFromCollection(schema, currentDepth),
+            () => this.generateFromWrapper(schema, currentDepth),
+            () => this.generateFromComposite(schema, currentDepth),
+            () => this.generateFromPipeline(schema, currentDepth),
+        ];
+        for (const handler of handlers) {
+            const result = handler();
+            if (result !== this.NOT_FOUND) {
+                return result;
+            }
+        }
+        return this.factory.lorem.word();
+    }
+
+    private generateFromFormatOrPrimitive(schema: ZodType): unknown {
         const isV3String = hasZodV3Structure(schema) && getSchemaTypeName(schema) === 'ZodString';
 
         if (!isV3String) {
@@ -958,7 +1038,7 @@ class ZodSchemaGenerator {
             }
         }
 
-        const primitiveResult = this.tryGenerateFromMapping(schema, zodTypeGuards, {
+        return this.tryGenerateFromMapping(schema, zodTypeGuards, {
             ...primitiveTypeHandlers,
             date: (generator: ZodSchemaGenerator, schema: ZodDate) => generator.generateDate(schema),
             enum: (generator: ZodSchemaGenerator, schema: ZodEnum) => {
@@ -971,10 +1051,9 @@ class ZodSchemaGenerator {
             number: (generator: ZodSchemaGenerator, schema: ZodNumber) => generator.generateNumber(schema),
             string: (generator: ZodSchemaGenerator, schema: ZodString) => generator.generateString(schema),
         } as unknown as Record<string, SchemaGeneratorFunction>);
-        if (primitiveResult !== this.NOT_FOUND) {
-            return primitiveResult;
-        }
+    }
 
+    private generateFromCollection(schema: ZodType, currentDepth: number): unknown {
         if (zodTypeGuards.tuple(schema)) {
             return this.generateTuple(schema, currentDepth);
         }
@@ -993,7 +1072,10 @@ class ZodSchemaGenerator {
         if (zodTypeGuards.record(schema)) {
             return this.generateRecord(schema, currentDepth);
         }
+        return this.NOT_FOUND;
+    }
 
+    private generateFromWrapper(schema: ZodType, currentDepth: number): unknown {
         if (zodTypeGuards.default(schema) || zodTypeGuards.catch(schema)) {
             const innerType = schemaHelpers.getInnerType(schema);
             if (!innerType) {
@@ -1019,7 +1101,10 @@ class ZodSchemaGenerator {
                 ? this.generateFromSchema(innerType, currentDepth + 1)
                 : null;
         }
+        return this.NOT_FOUND;
+    }
 
+    private generateFromComposite(schema: ZodType, currentDepth: number): unknown {
         if (zodTypeGuards.union(schema)) {
             const options = schemaHelpers.getUnionOptions(schema);
             if (options.length === 0) {
@@ -1039,49 +1124,46 @@ class ZodSchemaGenerator {
             return this.generateFromSchema(randomOption, currentDepth + 1);
         }
         if (zodTypeGuards.intersection(schema)) {
+            return this.generateIntersection(schema, currentDepth);
+        }
+        return this.NOT_FOUND;
+    }
+
+    private generateIntersection(schema: ZodType, currentDepth: number): unknown {
+        const def = schemaHelpers.getDef(schema);
+        const left = getProperty(def, ['left']) as undefined | ZodType;
+        const right = getProperty(def, ['right']) as undefined | ZodType;
+
+        if (!left || !right) {
+            return this.factory.lorem.word();
+        }
+
+        const leftResult = this.generateFromSchema(left, currentDepth + 1);
+        const rightResult = this.generateFromSchema(right, currentDepth + 1);
+
+        if (isObject(leftResult) && isNotNullish(leftResult) && isObject(rightResult) && isNotNullish(rightResult)) {
+            return merge(leftResult, rightResult);
+        }
+        return leftResult;
+    }
+
+    private generateFromPipeline(schema: ZodType, currentDepth: number): unknown {
+        if (zodTypeGuards.pipe(schema)) {
             const def = schemaHelpers.getDef(schema);
-            const left = getProperty(def, ['left']) as undefined | ZodType;
-            const right = getProperty(def, ['right']) as undefined | ZodType;
-
-            if (!left || !right) {
-                return this.factory.lorem.word();
-            }
-
-            const leftResult = this.generateFromSchema(left, currentDepth + 1);
-            const rightResult = this.generateFromSchema(right, currentDepth + 1);
-
-            if (
-                isObject(leftResult) &&
-                isNotNullish(leftResult) &&
-                isObject(rightResult) &&
-                isNotNullish(rightResult)
-            ) {
-                return merge(leftResult, rightResult);
-            }
-            return leftResult;
-        }
-
-        if (zodTypeGuards.transform(schema) || zodTypeGuards.pipe(schema)) {
-            if (zodTypeGuards.pipe(schema)) {
-                const def = schemaHelpers.getDef(schema);
-                const out = getProperty(def, ['out']) as undefined | ZodType;
-                if (out) {
-                    return this.generateFromSchema(out, currentDepth + 1);
-                }
-            }
-
-            if (zodTypeGuards.transform(schema)) {
-                return this.factory.lorem.word();
+            const out = getProperty(def, ['out']) as undefined | ZodType;
+            if (out) {
+                return this.generateFromSchema(out, currentDepth + 1);
             }
         }
-
+        if (zodTypeGuards.transform(schema)) {
+            return this.factory.lorem.word();
+        }
         if (zodTypeGuards.promise(schema)) {
             throw new Error(
                 'z.promise() schemas require custom type handlers. Use .withTypeHandler("ZodPromise", yourHandler) to provide a custom promise generator.',
             );
         }
-
-        return this.factory.lorem.word();
+        return this.NOT_FOUND;
     }
 
     private generateMap(schema: ZodMap, currentDepth: number): Map<unknown, unknown> {
@@ -1108,73 +1190,14 @@ class ZodSchemaGenerator {
     }
 
     private generateNumber(schema: ZodNumber): number {
-        const checks = schemaHelpers.getChecks(schema);
-        const constraints: NumberConstraints = { isInt: false };
+        const constraints = collectNumberConstraints(schemaHelpers.getChecks(schema));
+        const { isInt, step } = constraints;
 
-        for (const check of checks) {
-            if (isLessThanCheck(check)) {
-                const inclusive = schemaHelpers.getCheckInclusive(check);
-                const value = schemaHelpers.getCheckValue(check);
-                if (typeof value === 'number') {
-                    constraints.max = inclusive ? value : value - NUMBER_CONSTRAINTS.PRECISION_OFFSET;
-                }
-            } else if (isGreaterThanCheck(check)) {
-                const inclusive = schemaHelpers.getCheckInclusive(check);
-                const value = schemaHelpers.getCheckValue(check);
-                if (typeof value === 'number') {
-                    constraints.min = inclusive ? value : value + NUMBER_CONSTRAINTS.PRECISION_OFFSET;
-                }
-            } else if (isMultipleOfCheck(check)) {
-                const value = schemaHelpers.getCheckValue(check);
-                if (typeof value === 'number') {
-                    constraints.step = value;
-                }
-            } else if (isNumberFormatCheck(check)) {
-                const format = schemaHelpers.getCheckFormat(check);
-                if (format === 'int32' || format === 'uint32' || format === 'safeint') {
-                    constraints.isInt = true;
-                }
-            } else {
-                const v3Kind = getProperty(check, ['kind']) as string | undefined;
-                if (v3Kind === 'int') {
-                    constraints.isInt = true;
-                }
-            }
-        }
-
-        const { isInt, max, min, step } = constraints;
-
-        const hasStepWithoutMin = step && min === undefined;
-
-        const safeMin =
-            min !== undefined && Number.isFinite(min)
-                ? min
-                : hasStepWithoutMin
-                  ? 0
-                  : isInt
-                    ? NUMBER_CONSTRAINTS.DEFAULT_INT_MIN
-                    : NUMBER_CONSTRAINTS.DEFAULT_MIN;
-        const safeMax =
-            max !== undefined && Number.isFinite(max)
-                ? max
-                : isInt
-                  ? NUMBER_CONSTRAINTS.DEFAULT_INT_MAX
-                  : NUMBER_CONSTRAINTS.DEFAULT_MAX;
-
-        const options = { max: safeMax, min: safeMin };
+        const options = resolveNumberBounds(constraints);
         let result = isInt ? this.factory.number.int(options) : this.factory.number.float(options);
 
         if (step && step > 0) {
-            if (step < 1) {
-                const precision = Math.ceil(-Math.log10(step));
-                result = Math.round(result / step) * step;
-                result = Math.round(result * Math.pow(10, precision)) / Math.pow(10, precision);
-            } else {
-                result = Math.round(result / step) * step;
-            }
-            if (Object.is(result, -0)) {
-                result = 0;
-            }
+            result = roundToStep(result, step);
         }
 
         if (isInt) {
