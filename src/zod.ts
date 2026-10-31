@@ -417,7 +417,6 @@ const createZodTypeGuard = <T extends ZodType>(constructor: new (...args: never[
 
             if (typeName) {
                 if (hasZodV3Structure(value)) {
-                    // eslint-disable-next-line @typescript-eslint/no-deprecated
                     const v3TypeName = Reflect.get(value._def, 'typeName') as string | undefined;
                     if (v3TypeName === typeName) {
                         return true;
@@ -657,7 +656,6 @@ class ZodSchemaGenerator {
             const chars = '0123456789abcdefghijklmnopqrstuv';
             let xid = '';
             for (let i = 0; i < STRING_LENGTHS.XID; i++) {
-                // eslint-disable-next-line @typescript-eslint/no-misused-spread
                 xid += generator.factory.helpers.arrayElement([...chars]);
             }
             return xid;
@@ -1407,7 +1405,6 @@ class ZodSchemaGenerator {
     }
 
     private tryGenerateFromMetadata(schema: ZodType): unknown {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         const metadata = isFunction(schema.meta) ? schema.meta() : undefined;
         if (!metadata) {
             return undefined;
@@ -1500,7 +1497,7 @@ class ZodSchemaGenerator {
  * @see {@link https://github.com/goldziher/interface-forge/blob/main/examples/07-zod-testing.ts | Testing Example}
  */
 export class ZodFactory<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line typescript/no-explicit-any -- any object shape and config, strict or loose
     T extends ZodObject<any, any>,
     O extends ZodFactoryOptions = ZodFactoryOptions,
 > extends Factory<z.output<T>, O> {

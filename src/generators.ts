@@ -46,7 +46,6 @@ export class CycleGenerator<T> extends BaseGenerator<T> {
         const { values } = this;
         return (function* () {
             let counter = 0;
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             while (true) {
                 yield values[counter];
                 counter = (counter + 1) % values.length;
@@ -68,13 +67,11 @@ export class SampleGenerator<T> extends BaseGenerator<T> {
         const { values } = this;
         return (function* () {
             if (values.length === 1) {
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 while (true) {
                     yield values[0];
                 }
             } else {
                 let lastValue: null | T = null;
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 while (true) {
                     let newValue: T;
                     do {
@@ -106,7 +103,6 @@ export class IncrementSequenceGenerator {
         const step = this.#step;
         return (function* () {
             let current = start;
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             while (true) {
                 yield current;
                 current += step;
@@ -135,7 +131,6 @@ export class TemplateSequenceGenerator {
         const start = this.#start;
         return (function* () {
             let current = start;
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             while (true) {
                 yield pattern
                     .replaceAll('{n}', String(current))
@@ -173,7 +168,6 @@ export class DateSequenceGenerator {
         const unit = this.#unit;
         return (function* () {
             let offset = 0;
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             while (true) {
                 const date = new Date(start);
                 if (unit === 'day') {
@@ -218,7 +212,6 @@ export function createSequenceFactory(): SequenceFactory {
             const key = getCallsiteKey('date');
             const { start, step = 1, unit = 'day' } = options;
             return (function* () {
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 while (true) {
                     const offset = dateState.get(key) ?? 0;
                     const date = new Date(start);
@@ -241,7 +234,6 @@ export function createSequenceFactory(): SequenceFactory {
             const key = getCallsiteKey('increment');
             const { start = 1, step = 1 } = options;
             return (function* () {
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 while (true) {
                     const current = incrementState.get(key) ?? start;
                     incrementState.set(key, current + step);
@@ -256,7 +248,6 @@ export function createSequenceFactory(): SequenceFactory {
                 throw new Error('Template sequence pattern must include {n} or a padded placeholder like {0000}');
             }
             return (function* () {
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 while (true) {
                     const current = templateState.get(key) ?? start;
                     templateState.set(key, current + 1);

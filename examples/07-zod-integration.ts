@@ -286,9 +286,7 @@ const hookedUserFactory = new ZodFactory(UserProfileSchema)
 console.log('\n=== Example 10: Using Hooks ===');
 const hookedUser = hookedUserFactory.build();
 console.log('User with computed fields:', {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     fullAddress: (hookedUser as any).fullAddress,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     isAdmin: (hookedUser as any).isAdmin,
     username: hookedUser.username,
 });
