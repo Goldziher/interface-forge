@@ -14,7 +14,14 @@ import {
 } from 'zod/v4';
 import type { $ZodCheckRegex, $ZodChecks } from 'zod/v4/core';
 import { isFunction, isNotNullish, isObject, isRecord } from '@tool-belt/type-predicates';
-import { COLLECTION_SIZES, DEFAULT_MAX_DEPTH, NUMBER_CONSTRAINTS, STRING_LENGTHS } from './constants';
+import {
+    COLLECTION_SIZES,
+    DEFAULT_MAX_DEPTH,
+    NUMBER_CONSTRAINTS,
+    STRING_LENGTHS,
+    ULID_EPOCH_FROM,
+    ULID_EPOCH_TO,
+} from './constants';
 import { getProperty, merge } from './utils';
 import {
     builtinTypeMapping,
@@ -163,7 +170,12 @@ export class ZodSchemaGenerator {
         },
         ksuid: (generator: ZodSchemaGenerator) => generator.factory.string.alphanumeric(27),
         nanoid: (generator: ZodSchemaGenerator) => generator.factory.string.nanoid(),
-        ulid: (generator: ZodSchemaGenerator) => generator.factory.string.ulid(),
+        // faker's ulid() stamps the wall clock unless given a refDate; draw it from the seeded generator ~keep
+        // so a seeded factory yields the same ULIDs on every run. ~keep
+        ulid: (generator: ZodSchemaGenerator) =>
+            generator.factory.string.ulid({
+                refDate: generator.factory.date.between({ from: ULID_EPOCH_FROM, to: ULID_EPOCH_TO }),
+            }),
         url: (generator: ZodSchemaGenerator) => generator.factory.internet.url(),
         uuid: (generator: ZodSchemaGenerator) => generator.factory.string.uuid(),
         xid: (generator: ZodSchemaGenerator) => {

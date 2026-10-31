@@ -38,7 +38,10 @@ export const STRING_LENGTHS = {
     CUID_SUFFIX: 24,
     DEFAULT: 10,
     NANOID: 21,
-    ULID: 26,
     UUID_SEGMENTS: [8, 4, 4, 4, 12],
     XID: 20,
 } as const;
+
+/** Bounds of the seeded timestamp a generated ULID carries. */
+export const ULID_EPOCH_FROM = '2000-01-01T00:00:00.000Z';
+export const ULID_EPOCH_TO = '2030-01-01T00:00:00.000Z';

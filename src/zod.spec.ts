@@ -210,6 +210,26 @@ describe('ZodFactory', () => {
                 });
             });
 
+            it('should generate the same ULIDs for the same seed at different times', () => {
+                const schema = z.object({ id: z.ulid() });
+                vi.useFakeTimers();
+                try {
+                    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+                    const first = new ZodFactory(schema);
+                    first.seed(42);
+                    const firstIds = first.batch(5).map((result) => result.id);
+
+                    vi.setSystemTime(new Date('2026-01-01T00:00:00.007Z'));
+                    const second = new ZodFactory(schema);
+                    second.seed(42);
+                    const secondIds = second.batch(5).map((result) => result.id);
+
+                    expect(secondIds).toEqual(firstIds);
+                } finally {
+                    vi.useRealTimers();
+                }
+            });
+
             it('should generate XID strings', () => {
                 const schema = z.object({
                     id: z.xid(),
