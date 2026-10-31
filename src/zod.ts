@@ -6,8 +6,8 @@ import {
     type FixtureConfiguration,
     type PartialFactoryFunction,
 } from './index';
-import { ConfigurationError, FixtureError } from './errors';
-import { isAsyncFunction, isFunction, isObject } from '@tool-belt/type-predicates';
+import { FixtureError } from './errors';
+import { isFunction, isObject } from '@tool-belt/type-predicates';
 import { merge } from './utils';
 import { getSchemaTypeName, type ZodTypeHandler } from './zod-schema';
 import { ZodSchemaGenerator } from './zod-generator';
@@ -154,11 +154,7 @@ export class ZodFactory<
      * @returns Array of generated instances
      */
     batch = (size: number, kwargs?: Partial<z.output<T>> | Partial<z.output<T>>[]): z.output<T>[] => {
-        if (isAsyncFunction(this.factory)) {
-            throw new ConfigurationError(
-                'Async factory function detected. Use buildAsync() method to build instances with async factories.',
-            );
-        }
+        this.assertSyncFactory();
 
         if (!Number.isInteger(size) || size < 0) {
             throw new Error('Batch size must be a non-negative integer');
@@ -169,35 +165,21 @@ export class ZodFactory<
         }
 
         const results: z.output<T>[] = [];
+        const overridesGenerator = kwargs
+            ? this.iterate<Partial<z.output<T>>>(Array.isArray(kwargs) ? kwargs : [kwargs])
+            : undefined;
 
-        if (kwargs) {
-            const generator = this.iterate<Partial<z.output<T>>>(
-                Array.isArray(kwargs) ? kwargs : ([kwargs] as Partial<z.output<T>>[]),
+        for (let i = 0; i < size; i++) {
+            const generatedSchema = this.generator.generateFromSchema(this.schema);
+            const generatedFromFactory = this.factory(this as unknown as Factory<z.output<T>>, i);
+
+            results.push(
+                this.schema.parse({
+                    ...(generatedSchema as Record<string, unknown>),
+                    ...(generatedFromFactory as Record<string, unknown>),
+                    ...(overridesGenerator?.next().value as Record<string, unknown> | undefined),
+                }),
             );
-
-            for (let i = 0; i < size; i++) {
-                const overrides = generator.next().value;
-                const generatedSchema = this.generator.generateFromSchema(this.schema);
-                const generatedFromFactory = this.factory(this as unknown as Factory<z.output<T>>, i);
-
-                const result = this.schema.parse({
-                    ...(generatedSchema as Record<string, unknown>),
-                    ...(generatedFromFactory as Record<string, unknown>),
-                    ...(overrides as Record<string, unknown>),
-                });
-                results.push(result);
-            }
-        } else {
-            for (let i = 0; i < size; i++) {
-                const generatedSchema = this.generator.generateFromSchema(this.schema);
-                const generatedFromFactory = this.factory(this as unknown as Factory<z.output<T>>, i);
-
-                const result = this.schema.parse({
-                    ...(generatedSchema as Record<string, unknown>),
-                    ...(generatedFromFactory as Record<string, unknown>),
-                });
-                results.push(result);
-            }
         }
 
         return results;
@@ -231,21 +213,9 @@ export class ZodFactory<
      * ```
      */
     build = (kwargs?: Partial<z.output<T>>, options?: Partial<O>): z.output<T> => {
-        if (isAsyncFunction(this.factory)) {
-            throw new ConfigurationError(
-                'Async factory function detected. Use buildAsync() method to build instances with async factories.',
-            );
-        }
+        this.assertSyncFactory();
 
-        const hasAsyncHooks =
-            this.beforeBuildHooks.some((hook) => isAsyncFunction(hook)) ||
-            this.afterBuildHooks.some((hook) => isAsyncFunction(hook));
-
-        if (hasAsyncHooks) {
-            throw new ConfigurationError(
-                'Async hooks detected. Use buildAsync() method to build instances with async hooks.',
-            );
-        }
+        this.assertSyncHooks();
 
         // Check if fixture generation is requested
         const mergedOptions = {

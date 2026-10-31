@@ -77,6 +77,12 @@ export type {
     PersistenceAdapter,
 } from './types';
 
+function asyncFactoryError(): ConfigurationError {
+    return new ConfigurationError(
+        'Async factory function detected. Use buildAsync() method to build instances with async factories.',
+    );
+}
+
 /**
  * A factory class for generating type-safe mock data by extending Faker.js functionality.
  * Provides methods for creating single instances, batches, and complex object compositions
@@ -138,11 +144,7 @@ export class Factory<
      * @throws {Error} If size is negative or not an integer
      */
     batch = (size: number, kwargs?: Partial<T> | Partial<T>[]): T[] => {
-        if (isAsyncFunction(this.factory)) {
-            throw new ConfigurationError(
-                'Async factory function detected. Use buildAsync() method to build instances with async factories.',
-            );
-        }
+        this.assertSyncFactory();
 
         if (!Number.isInteger(size) || size < 0) {
             throw new Error('Batch size must be a non-negative integer');
@@ -162,9 +164,7 @@ export class Factory<
         }
 
         if (results.some((result) => result instanceof Promise)) {
-            throw new ConfigurationError(
-                'Async factory function detected. Use buildAsync() method to build instances with async factories.',
-            );
+            throw asyncFactoryError();
         }
 
         return results;
@@ -227,21 +227,9 @@ export class Factory<
      * @throws {FixtureValidationError} If fixture validation fails
      */
     build = (kwargs?: Partial<T>, options?: Partial<O>): F extends FactoryFunction<T> ? T : Partial<T> => {
-        if (isAsyncFunction(this.factory)) {
-            throw new ConfigurationError(
-                'Async factory function detected. Use buildAsync() method to build instances with async factories.',
-            );
-        }
+        this.assertSyncFactory();
 
-        const hasAsyncHooks =
-            this.beforeBuildHooks.some((hook) => isAsyncFunction(hook)) ||
-            this.afterBuildHooks.some((hook) => isAsyncFunction(hook));
-
-        if (hasAsyncHooks) {
-            throw new ConfigurationError(
-                'Async hooks detected. Use buildAsync() method to build instances with async hooks.',
-            );
-        }
+        this.assertSyncHooks();
 
         // Check if fixture generation is requested
         const mergedOptions = {
@@ -267,9 +255,7 @@ export class Factory<
         let result = this.#generate(0, params, 0);
 
         if (result instanceof Promise) {
-            throw new ConfigurationError(
-                'Async factory function detected. Use buildAsync() method to build instances with async factories.',
-            );
+            throw asyncFactoryError();
         }
 
         for (const hook of this.afterBuildHooks) {
@@ -590,6 +576,21 @@ export class Factory<
         return this;
     }
 
+    protected assertSyncFactory(): void {
+        if (isAsyncFunction(this.factory)) {
+            throw asyncFactoryError();
+        }
+    }
+
+    protected assertSyncHooks(): void {
+        const hooks = [...this.beforeBuildHooks, ...this.afterBuildHooks];
+        if (hooks.some((hook) => isAsyncFunction(hook))) {
+            throw new ConfigurationError(
+                'Async hooks detected. Use buildAsync() method to build instances with async hooks.',
+            );
+        }
+    }
+
     protected buildWithFixture(
         filePath: string,
         kwargs: Partial<T> | undefined,
@@ -621,9 +622,7 @@ export class Factory<
 
         let result = this.#generate(0, params, 0);
         if (result instanceof Promise) {
-            throw new ConfigurationError(
-                'Async factory function detected. Use buildAsync() method to build instances with async factories.',
-            );
+            throw asyncFactoryError();
         }
 
         for (const hook of this.afterBuildHooks) {
