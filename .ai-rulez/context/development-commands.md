@@ -23,9 +23,9 @@ pnpm clean
 pnpm docs:build
 ```
 
-The repository uses `poly` for git hooks. Install hooks with:
+mise pins the toolchain and runs the repository tasks (`mise tasks` lists them). `mise run validate` runs the
+CI-equivalent checks. The repository uses `poly` for git hooks. Install hooks with:
 
 ```bash
-poly hooks update
-poly hooks install
+mise run governance:hooks:install
 ```

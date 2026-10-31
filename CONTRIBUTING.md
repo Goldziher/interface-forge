@@ -10,11 +10,9 @@ This package is open to contributions. To contribute, please follow these steps:
 
 ## AI governance
 
-Install ai-rulez 5.3.0 and Poly, then run `task governance:hooks`.
-Installing governance hooks requires Python 3.11 or newer. CI uses the reviewed
-5.3.0 source revision `1dd46d774f156f3d170ecd1b702598b12d1eaf5b`.
+Install [mise](https://mise.jdx.dev), then run `mise run setup` to install the pinned toolchain, the
+dependencies and the governance hooks (`mise run governance:hooks:install` reinstalls the hooks alone).
+ai-rulez always runs at its latest release through `npx -y ai-rulez@latest`.
 
-Edit `.ai-rulez/` sources, then run `ai-rulez migrate okf --check`,
-`ai-rulez validate --strict --no-local`, `ai-rulez lock --content-only`, and
-`ai-rulez generate --no-local --strict-config`. Verify generated freshness with
-`ai-rulez generate --no-local --strict-config --check` and `ai-rulez lock --check`.
+Edit `.ai-rulez/` sources, then run `mise run governance:generate` and `npx -y ai-rulez@latest lock`.
+Verify generated freshness with `mise run governance:check`.

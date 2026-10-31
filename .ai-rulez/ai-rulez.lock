@@ -4,7 +4,7 @@
 version = 1
 ai_rulez_version = '5.9.7'
 scope = 'all'
-tree = 'sha256:0b3021e1282d79c623feecc23488dbe300e2569c06a2b5bd6918cbb5df89aacd'
+tree = 'sha256:15c76a1485f800443d1d61b07fa4b980fff8f54a3d9c07fe5958c3c0d9415598'
 
 [[include]]
 name = 'xberg-cicd'
@@ -180,7 +180,7 @@ digest = 'sha256:780faccdb41e4d4e6efb5b5bf6f1e7574c35ae794963b90305207bc02f76980
 kind = 'context'
 id = 'development-commands'
 path = 'context/development-commands.md'
-digest = 'sha256:b9e50b4f6b109b1e48190bc371d1df7211e7dc9da50a815fe419b7fbfcd55307'
+digest = 'sha256:601f1b3cc4e7b86338bdef7050b10ec387d7fe1426f604d449b58d7c4b6cbb4b'
 
 [[item]]
 kind = 'rule'
