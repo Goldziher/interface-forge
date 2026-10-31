@@ -29,7 +29,14 @@ export default defineConfig({
         sourcemap: true,
         target: 'es2020',
     },
-    plugins: [dts({ bundleTypes: true })],
+    plugins: [
+        dts({
+            // unplugin-dts hands api-extractor the installed typescript package as its compiler folder, but
+            // TypeScript 7 ships no lib .d.ts files, so globals such as Error stop resolving. Unset it so
+            // api-extractor reads the lib files of the TypeScript it bundles. ~keep
+            bundleTypes: { invokeOptions: { typescriptCompilerFolder: undefined } },
+        }),
+    ],
     test: {
         coverage: {
             exclude: ['node_modules/**', 'dist/**'],
