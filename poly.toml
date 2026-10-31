@@ -18,7 +18,12 @@ revision = "v5"
 hooks = ["ai-rulez-validate"]
 
 [discovery]
-exclude = [".ai-rulez/.generated-manifest*.json"]
+exclude = [
+    ".ai-rulez/.generated-manifest*.json",
+    # toolchains.py sync writes these and its check compares them byte for byte. ~keep
+    "/mise-tasks/shared.toml",
+    "/mise-tasks/.shared/**",
+]
 
 [tools.actionlint]
 enabled = true
