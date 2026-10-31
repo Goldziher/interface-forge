@@ -1,28 +1,43 @@
 <svg width="7085" height="7340" viewBox="0 0 7085 7340" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="7085" height="7340" rx="22" fill="#2E2D36"/>
-<circle cx="3542.5" cy="3669.5" r="2617.5" fill="#98CFE3" stroke="#2E2D36" stroke-width="100"/>
-<path d="M4238 4234L4525 4514.5L4730 4552L4843 4654.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<path d="M3824.5 4374.5V5078.5L4091 5352V5581" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<path d="M2874 4237.5L2638.5 4511L2423 4542L2242 4675" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<path d="M3542 1318C4397.37 1318 5090 2005 5090 2851.5C5090 3698 4397.37 4385 3542 4385C2686.63 4385 1994 3698 1994 2851.5C1994 2005 2686.63 1318 3542 1318Z" fill="#98CFE3" stroke="#2E2D36" stroke-width="100"/>
-<path d="M3551 1586C4048.95 1586 4452 1985.93 4452 2478.5C4452 2971.07 4048.95 3371 3551 3371C3053.05 3371 2650 2971.07 2650 2478.5C2650 1985.93 3053.05 1586 3551 1586Z" fill="white" stroke="#2E2D36" stroke-width="80"/>
-<path d="M2673 3411.5C3271.5 4019.5 3898.5 3903.5 4400.5 3411.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<circle cx="1840.5" cy="4178.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<circle cx="2093.5" cy="4776.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<circle cx="2533.5" cy="5246.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<circle cx="3551.5" cy="5860.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<circle cx="4125.5" cy="5736.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<path d="M4118.5 4292.5V4774.5L4439.5 5112.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<circle cx="4542.5" cy="5246.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<circle cx="4979.5" cy="4768.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<circle cx="5177.5" cy="4177.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
-<path d="M2566.5 4067.5L2431.5 4183.5H2016.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<path d="M3052 4309.5V4730L2659 5119.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<path d="M3257 4364V5112.5L2994 5393V5577.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<path d="M3554.5 4398.5V5683.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<path d="M4518 4070L4600 4149H5007" stroke="#2E2D36" stroke-width="100" stroke-linecap="round"/>
-<ellipse cx="3551" cy="2478.5" rx="521" ry="534.5" fill="#2E2D36"/>
-<ellipse cx="3654.5" cy="2339.5" rx="187.5" ry="192.5" fill="white"/>
-<ellipse cx="3828" cy="2625.5" rx="85" ry="87.5" fill="white"/>
-<circle cx="2977.5" cy="5749.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60"/>
+  <rect width="7085" height="7340" rx="22" fill="#2E2D36" />
+  <circle cx="3542.5" cy="3669.5" r="2617.5" fill="#98CFE3" stroke="#2E2D36" stroke-width="100" />
+  <path d="M4238 4234L4525 4514.5L4730 4552L4843 4654.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <path d="M3824.5 4374.5V5078.5L4091 5352V5581" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <path d="M2874 4237.5L2638.5 4511L2423 4542L2242 4675" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <path
+    d="M3542 1318C4397.37 1318 5090 2005 5090 2851.5C5090 3698 4397.37 4385 3542 4385C2686.63 4385 1994 3698 1994 2851.5C1994 2005 2686.63 1318 3542 1318Z"
+    fill="#98CFE3"
+    stroke="#2E2D36"
+    stroke-width="100"
+  />
+  <path
+    d="M3551 1586C4048.95 1586 4452 1985.93 4452 2478.5C4452 2971.07 4048.95 3371 3551 3371C3053.05 3371 2650 2971.07 2650 2478.5C2650 1985.93 3053.05 1586 3551 1586Z"
+    fill="white"
+    stroke="#2E2D36"
+    stroke-width="80"
+  />
+  <path
+    d="M2673 3411.5C3271.5 4019.5 3898.5 3903.5 4400.5 3411.5"
+    stroke="#2E2D36"
+    stroke-width="100"
+    stroke-linecap="round"
+  />
+  <circle cx="1840.5" cy="4178.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <circle cx="2093.5" cy="4776.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <circle cx="2533.5" cy="5246.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <circle cx="3551.5" cy="5860.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <circle cx="4125.5" cy="5736.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <path d="M4118.5 4292.5V4774.5L4439.5 5112.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <circle cx="4542.5" cy="5246.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <circle cx="4979.5" cy="4768.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <circle cx="5177.5" cy="4177.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
+  <path d="M2566.5 4067.5L2431.5 4183.5H2016.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <path d="M3052 4309.5V4730L2659 5119.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <path d="M3257 4364V5112.5L2994 5393V5577.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <path d="M3554.5 4398.5V5683.5" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <path d="M4518 4070L4600 4149H5007" stroke="#2E2D36" stroke-width="100" stroke-linecap="round" />
+  <ellipse cx="3551" cy="2478.5" rx="521" ry="534.5" fill="#2E2D36" />
+  <ellipse cx="3654.5" cy="2339.5" rx="187.5" ry="192.5" fill="white" />
+  <ellipse cx="3828" cy="2625.5" rx="85" ry="87.5" fill="white" />
+  <circle cx="2977.5" cy="5749.5" r="149.5" fill="white" stroke="#2E2D36" stroke-width="60" />
 </svg>

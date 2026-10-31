@@ -45,14 +45,7 @@
     },
     "overrides": [
         {
-            "files": [
-                "**/*.spec.ts",
-                "**/*.spec.tsx",
-                "**/*.test.ts",
-                "**/*.test.tsx",
-                "**/tests/**",
-                "examples/**"
-            ],
+            "files": ["**/*.spec.ts", "**/*.spec.tsx", "**/*.test.ts", "**/*.test.tsx", "**/tests/**", "examples/**"],
             "rules": {
                 "@typescript-eslint/no-explicit-any": "off",
                 "no-console": "off",
