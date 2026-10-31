@@ -650,15 +650,7 @@ class ZodSchemaGenerator {
         },
         ksuid: (generator: ZodSchemaGenerator) => generator.factory.string.alphanumeric(27),
         nanoid: (generator: ZodSchemaGenerator) => generator.factory.string.nanoid(),
-        ulid: (generator: ZodSchemaGenerator) => {
-            const chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-            let ulid = '';
-            for (let i = 0; i < STRING_LENGTHS.ULID; i++) {
-                // eslint-disable-next-line @typescript-eslint/no-misused-spread
-                ulid += generator.factory.helpers.arrayElement([...chars]);
-            }
-            return ulid;
-        },
+        ulid: (generator: ZodSchemaGenerator) => generator.factory.string.ulid(),
         url: (generator: ZodSchemaGenerator) => generator.factory.internet.url(),
         uuid: (generator: ZodSchemaGenerator) => generator.factory.string.uuid(),
         xid: (generator: ZodSchemaGenerator) => {

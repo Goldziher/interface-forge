@@ -206,7 +206,7 @@ describe('ZodFactory', () => {
                 const results = factory.batch(10);
 
                 results.forEach((result) => {
-                    expect(result.id).toMatch(/^[0-9A-Z]{26}$/);
+                    expect(result.id).toMatch(/^[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
                 });
             });
 
