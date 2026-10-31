@@ -27,3 +27,7 @@ exclude = [
 
 [tools.actionlint]
 enabled = true
+
+[per-file-ignores]
+# SVGs are vector artwork, not source; their length is the drawing's path data. ~keep
+"**/*.svg" = ["file-too-long"]
