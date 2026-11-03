@@ -2,6 +2,12 @@
 
 All notable user-facing changes to this project are documented here.
 
+## [Unreleased]
+
+### Changed
+
+- Minimum supported versions raised: Node.js 22.
+
 ## [2.7.0] - 2026-05-28
 
 ### Added

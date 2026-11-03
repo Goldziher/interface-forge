@@ -6,7 +6,7 @@ This directory contains the documentation for Interface Forge, built with [Docus
 
 ### Prerequisites
 
-- Node.js v18 or higher
+- Node.js v22 or higher
 - pnpm v11 or higher
 
 ### Development
