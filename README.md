@@ -191,6 +191,21 @@ const userFactory = new Factory<User>((faker) => ({
 const admin = userFactory.build(undefined, { presets: ['admin'] });
 ```
 
+### Constraint Helpers
+
+- `factory.constraints.min` / `.max` / `.between` - Constrain generated numbers (clamped)
+- `factory.constraints.pattern` - Regenerate until a string matches a regex
+- `factory.constraints.custom` - Regenerate until a predicate accepts the value
+- `factory.constraints.unique` - Factory-local uniqueness across builds and batch items, tracked per field
+- Retry-based helpers throw a `ConstraintError` (with `field`, `constraint`, `attempts`) once the attempt limit is reached:
+
+```typescript
+const orderFactory = new Factory<Order>((faker) => ({
+    id: factory.constraints.unique('id', () => faker.string.uuid()),
+    total: factory.constraints.between(1, 500, () => faker.number.float({ min: 0, max: 1000 })),
+}));
+```
+
 ### Fixture Caching
 
 - Cache generated data for consistent tests

@@ -23,6 +23,7 @@ import { ConfigurationError, FixtureError, FixtureValidationError } from './erro
 import { createSequenceFactory, CycleGenerator, SampleGenerator, type SequenceFactory } from './generators';
 import { merge, Ref, validateBatchSize } from './utils';
 import { DEFAULT_MAX_DEPTH } from './constants';
+import { Constraints } from './constraints';
 import type {
     AfterBuildHook,
     BeforeBuildHook,
@@ -41,10 +42,13 @@ import type {
 export {
     CircularReferenceError,
     ConfigurationError,
+    ConstraintError,
     FixtureError,
     FixtureValidationError,
     ValidationError,
 } from './errors';
+export { Constraints, DEFAULT_CONSTRAINT_ATTEMPTS } from './constraints';
+export type { ConstraintOptions, Pattern } from './constraints';
 export {
     BaseGenerator,
     createSequenceFactory,
@@ -109,6 +113,11 @@ export class Factory<
     private defaultAdapter?: PersistenceAdapter<T>;
     readonly #presets = new Map<string, Partial<T>>();
     readonly sequence: SequenceFactory = createSequenceFactory();
+    /**
+     * Constraint helpers bound to this factory instance. Uniqueness tracking
+     * through {@link Constraints.unique} is factory-local.
+     */
+    readonly constraints: Constraints = new Constraints();
 
     constructor(factory: F, { locale = en, randomizer, ...rest }: Partial<O> = {}) {
         super({
