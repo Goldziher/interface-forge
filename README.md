@@ -53,6 +53,9 @@ pnpm add zod
 
 # For JSON Schema integration (optional)
 pnpm add ajv ajv-formats
+
+# For GraphQL integration (optional)
+pnpm add graphql
 ```
 
 ## Quick Start
@@ -119,6 +122,25 @@ const userSchema = {
 
 const userFactory = new JsonSchemaFactory(userSchema);
 const user = userFactory.build(); // Automatically validates with AJV
+```
+
+### GraphQL Integration
+
+```typescript
+import { createGraphQLFactories } from 'interface-forge/graphql';
+
+const sdl = `
+    type User { id: ID!, name: String!, roles: [Role!]! }
+    type Post { author: User!, title: String }
+    enum Role { ADMIN USER }
+    scalar DateTime
+`;
+
+const factories = createGraphQLFactories(sdl, {
+    customScalarGenerators: { DateTime: () => '2026-01-01T00:00:00Z' },
+});
+
+const post = factories.Post?.build();
 ```
 
 ### Database Persistence

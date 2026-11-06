@@ -54,6 +54,12 @@
             "import": "./dist/json-schema.mjs",
             "require": "./dist/json-schema.js",
             "default": "./dist/json-schema.mjs"
+        },
+        "./graphql": {
+            "types": "./dist/graphql.d.ts",
+            "import": "./dist/graphql.mjs",
+            "require": "./dist/graphql.js",
+            "default": "./dist/graphql.mjs"
         }
     },
     "engines": {
@@ -83,6 +89,7 @@
         "ajv-formats": "^3.0.1",
         "docusaurus-plugin-typedoc": "^1.4.3",
         "expect-type": "^1.4.0",
+        "graphql": "^16.15.0",
         "http-server": "^14.1.1",
         "mongoose": "^9.12.0",
         "rimraf": "^6.1.4",
@@ -102,6 +109,7 @@
     "peerDependencies": {
         "ajv": ">=8.0.0",
         "ajv-formats": ">=3.0.0",
+        "graphql": ">=16.0.0",
         "zod": ">=3.0.0"
     },
     "peerDependenciesMeta": {
@@ -109,6 +117,9 @@
             "optional": true
         },
         "ajv-formats": {
+            "optional": true
+        },
+        "graphql": {
             "optional": true
         },
         "zod": {
