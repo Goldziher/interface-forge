@@ -345,7 +345,7 @@ describe('Factory class functionality', () => {
                 id: factory.string.uuid(),
             }));
 
-            const TaggedUserFactory = BaseUserFactory.extend((factory) => ({
+            const TaggedUserFactory = BaseUserFactory.extend(() => ({
                 tag: 'admin',
             }));
 
