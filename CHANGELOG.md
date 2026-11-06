@@ -4,6 +4,16 @@ All notable user-facing changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-11-06
+
+### Added
+
+- Added named factory presets: `factory.preset(name, values)` for registration and `presets` in `build()` / `batch()` / `buildAsync()` / `batchAsync()` / `createMany()` options, applied in order (later presets win, explicit kwargs win over presets).
+- Added core constraint helpers with factory-local uniqueness: `Constraints` with `unique()`, `min()`, `max()`, `between()`, `pattern()`, and `custom()`, plus `ConstraintError` carrying `field`, `constraint`, and `attempts`.
+- Added the optional `interface-forge/graphql` entry point (`createGraphQLFactories` + `GraphQLFactory`) generating factories from SDL or `GraphQLSchema` input for object and input object types, with built-in scalars, enums, lists, non-null wrappers, custom scalar generator mapping and max-depth handling; `graphql` is an optional peer dependency.
+- Added the `FactoryOutput<F>` export for deriving the instance type from a factory, and improved `extend()` typing so extension functions can return only added fields (`Factory<T & Added>`).
+- Documented and tested async lazy values: `use(async () => ...)` resolves through `buildAsync()`/`batchAsync()` and sync `build()` fails with a clear `ConfigurationError`.
+
 ### Changed
 
 - Minimum supported versions raised: Node.js 22.
