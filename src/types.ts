@@ -38,6 +38,12 @@ export interface FactoryOptions {
     generateFixture?: boolean | string;
     locale?: LocaleDefinition | LocaleDefinition[];
     maxDepth?: number;
+    /**
+     * Named presets registered with {@link Factory.preset} to apply during
+     * build/batch, in order. Later presets override earlier ones and explicit
+     * kwargs override preset values.
+     */
+    presets?: string[];
     randomizer?: Randomizer;
 }
 

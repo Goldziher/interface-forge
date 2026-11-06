@@ -107,6 +107,7 @@ export class Factory<
     protected beforeBuildHooks: BeforeBuildHook<T>[] = [];
     protected readonly factory: F;
     private defaultAdapter?: PersistenceAdapter<T>;
+    readonly #presets = new Map<string, Partial<T>>();
     readonly sequence: SequenceFactory = createSequenceFactory();
 
     constructor(factory: F, { locale = en, randomizer, ...rest }: Partial<O> = {}) {
@@ -149,7 +150,7 @@ export class Factory<
      * @returns Array of generated instances
      * @throws {Error} If size is negative or not an integer
      */
-    batch = (size: number, kwargs?: Partial<T> | Partial<T>[]): T[] => {
+    batch = (size: number, kwargs?: Partial<T> | Partial<T>[], options?: Partial<O>): T[] => {
         this.assertSyncFactory();
 
         if (!Number.isInteger(size) || size < 0) {
@@ -160,9 +161,13 @@ export class Factory<
             return [];
         }
 
+        const presetParams = this.#applyPresets(kwargs, options?.presets) as Partial<T> | Partial<T>[];
+
         let results: T[];
-        if (kwargs) {
-            const generator = this.iterate<Partial<T>>(Array.isArray(kwargs) ? kwargs : ([kwargs] as Partial<T>[]));
+        if (presetParams) {
+            const generator = this.iterate<Partial<T>>(
+                Array.isArray(presetParams) ? presetParams : ([presetParams] as Partial<T>[]),
+            );
 
             results = new Array(size).fill(null).map((_, i) => this.#generate(i, generator.next().value, 0)) as T[];
         } else {
@@ -199,8 +204,9 @@ export class Factory<
     async batchAsync(
         size: number,
         kwargs?: Partial<T> | Partial<T>[],
+        options?: Partial<O>,
     ): Promise<F extends FactoryFunction<T> ? T[] : Partial<T>[]> {
-        return this.#batchAsync(size, kwargs, 0);
+        return this.#batchAsync(size, this.#applyPresets(kwargs, options?.presets), 0);
     }
 
     /**
@@ -248,11 +254,15 @@ export class Factory<
                     ? mergedOptions.generateFixture
                     : this.getDefaultFixturePath();
 
-            return this.buildWithFixture(fixturePath, kwargs, mergedOptions);
+            return this.buildWithFixture(
+                fixturePath,
+                this.#applyPresets(kwargs, mergedOptions.presets) as Partial<T> | undefined,
+                mergedOptions,
+            );
         }
 
         // Normal build without fixtures
-        let params = kwargs ?? {};
+        let params = (this.#applyPresets(kwargs, mergedOptions.presets) ?? {}) as Partial<T>;
 
         for (const hook of this.beforeBuildHooks) {
             params = hook(params) as Partial<T>;
@@ -298,11 +308,15 @@ export class Factory<
                     ? mergedOptions.generateFixture
                     : this.getDefaultFixturePath();
 
-            return this.buildWithFixtureAsync(fixturePath, kwargs, mergedOptions);
+            return this.buildWithFixtureAsync(
+                fixturePath,
+                this.#applyPresets(kwargs, mergedOptions.presets) as Partial<T> | undefined,
+                mergedOptions,
+            );
         }
 
         // Normal build without fixtures
-        let params = kwargs ?? {};
+        let params = (this.#applyPresets(kwargs, mergedOptions.presets) ?? {}) as Partial<T>;
 
         for (const hook of this.beforeBuildHooks) {
             params = await hook(params);
@@ -535,6 +549,37 @@ export class Factory<
     sample<U>(iterable: Iterable<U>): Generator<U, U, U> {
         const generator = new SampleGenerator(iterable);
         return generator.generate();
+    }
+
+    /**
+     * Registers a named preset with a set of partial overrides for this factory.
+     * Presets are applied during build/batch through the `presets` option:
+     * presets listed later override values from earlier presets, and explicit
+     * build kwargs override all preset values.
+     *
+     * @param name Unique preset name on this factory
+     * @param values Partial values to merge when the preset is applied
+     * @returns The current Factory instance for method chaining
+     *
+     * @example
+     * ```typescript
+     * const userFactory = new Factory<User>((faker) => ({
+     *   name: faker.person.fullName(),
+     *   role: 'user',
+     * }))
+     *   .preset('admin', { role: 'admin' })
+     *   .preset('banned', { isActive: false });
+     *
+     * userFactory.build(undefined, { presets: ['admin'] });
+     * userFactory.build({ role: 'guest' }, { presets: ['admin', 'banned'] });
+     * ```
+     */
+    preset(name: string, values: Partial<T>): this {
+        if (!name.trim()) {
+            throw new Error('Preset name cannot be empty');
+        }
+        this.#presets.set(name, values);
+        return this;
     }
 
     /**
@@ -853,6 +898,30 @@ export class Factory<
         } catch (error) {
             throw new FixtureError(`Failed to write fixture to ${parsedPath.fullPath}: ${(error as Error).message}`);
         }
+    }
+
+    #applyPresets(
+        params: Partial<T> | Partial<T>[] | undefined,
+        presetNames: string[] | undefined,
+    ): Partial<T> | Partial<T>[] | undefined {
+        if (!presetNames || presetNames.length === 0) {
+            return params;
+        }
+
+        const presets = presetNames.map((name) => {
+            const preset = this.#presets.get(name);
+            if (!preset) {
+                const available = [...this.#presets.keys()].join(', ');
+                throw new ConfigurationError(`Unknown preset "${name}". Registered presets: ${available || 'none'}.`);
+            }
+            return preset;
+        });
+
+        if (Array.isArray(params)) {
+            return params.map((item) => merge({}, ...presets, item)) as Partial<T>[];
+        }
+
+        return merge({}, ...presets, params ?? {}) as Partial<T>;
     }
 
     #batch(target: Factory<T>, size: number, batchKwargs: Partial<T> | Partial<T>[] | undefined, depth: number): T[] {

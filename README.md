@@ -177,6 +177,20 @@ const user = await UserFactory.buildAsync();
 
 - Sync lazy values work with `build()`; if an async lazy value reaches `build()` or `batch()`, a clear `ConfigurationError` tells you to use `buildAsync()`.
 
+### Presets
+
+- `factory.preset(name, values)` - Register named partial overrides on a factory
+- Apply one or more presets via `{ presets: ['first', 'second'] }` in `build()`/`batch()`; later presets override earlier ones and explicit kwargs override all presets:
+
+```typescript
+const userFactory = new Factory<User>((faker) => ({
+    name: faker.person.fullName(),
+    role: 'user',
+})).preset('admin', { role: 'admin' });
+
+const admin = userFactory.build(undefined, { presets: ['admin'] });
+```
+
 ### Fixture Caching
 
 - Cache generated data for consistent tests
