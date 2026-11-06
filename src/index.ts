@@ -471,9 +471,10 @@ export class Factory<
             );
         }
 
+        const presetParams = this.#applyPresets(kwargs, options?.presets) as Partial<T> | Partial<T>[];
         const instances = await (isAsyncFunction(this.factory)
-            ? this.#batchAsync(size, kwargs, 0)
-            : this.#batch(this as unknown as Factory<T>, size, kwargs, 0));
+            ? this.#batchAsync(size, presetParams, 0)
+            : this.#batch(this as unknown as Factory<T>, size, presetParams, 0));
         return adapter.createMany(instances as T[]);
     }
 

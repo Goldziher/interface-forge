@@ -105,4 +105,15 @@ describe('Factory presets', () => {
         const factory = CreateUserFactory();
         expect(() => factory.preset('   ', { role: 'admin' })).toThrow('Preset name cannot be empty');
     });
+
+    it('applies presets in createMany() persistence', async () => {
+        const adapter = { create: async (item: User) => item, createMany: async (items: User[]) => items };
+        const factory = CreateUserFactory().preset('admin', { role: 'admin' });
+
+        const users = await factory.createMany(2, undefined, { adapter, presets: ['admin'] });
+        expect(users).toHaveLength(2);
+        users.forEach((user) => {
+            expect(user.role).toBe('admin');
+        });
+    });
 });

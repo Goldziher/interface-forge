@@ -9,6 +9,7 @@ export type BeforeBuildHook<T> = (params: Partial<T>) => Partial<T> | Promise<Pa
 
 export interface CreateManyOptions<T> {
     adapter?: PersistenceAdapter<T>;
+    presets?: string[];
 }
 
 export interface CreateOptions<T> {
