@@ -83,6 +83,12 @@ function asyncFactoryError(): ConfigurationError {
     );
 }
 
+function asyncLazyValueError(): ConfigurationError {
+    return new ConfigurationError(
+        'Async lazy value detected (use(async () => ...)). Use buildAsync() to build instances with async lazy values.',
+    );
+}
+
 /**
  * A factory class for generating type-safe mock data by extending Faker.js functionality.
  * Provides methods for creating single instances, batches, and complex object compositions
@@ -536,8 +542,12 @@ export class Factory<
      * The function and its arguments are stored but not executed until the factory builds an object.
      * Essential for creating relationships between factories without causing infinite recursion.
      *
+     * Async handlers are supported with {@link Factory.buildAsync} and {@link Factory.batchAsync}.
+     * Values from `use(async () => ...)` await resolution during async builds and fail clearly
+     * if used with the synchronous `build()`.
+     *
      * @template C The function type
-     * @param handler The function to call during object generation
+     * @param handler The function to call during object generation (may be async)
      * @param args Arguments to pass to the function when called
      * @returns A reference that will execute the function during build
      */
@@ -924,7 +934,11 @@ export class Factory<
 
     #parseValue(value: unknown): unknown {
         if (value instanceof Ref) {
-            return value.callHandler();
+            const resolved = value.callHandler();
+            if (resolved instanceof Promise) {
+                throw asyncLazyValueError();
+            }
+            return resolved;
         }
 
         if (isIterator(value)) {

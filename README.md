@@ -161,6 +161,22 @@ const enhancedUserFactory = userFactory.compose<EnhancedUser>({
 - `afterBuild()` - Transform data after generation
 - Full async support for external API calls
 
+### Lazy Evaluation
+
+- `factory.use(fn, ...args)` - Defer a function call until the object is built
+- Async lazy values work with `buildAsync()` and `batchAsync()`:
+
+```typescript
+const UserFactory = new Factory<User>((factory) => ({
+    id: factory.string.uuid(),
+    token: factory.use(async () => await generateToken()),
+}));
+
+const user = await UserFactory.buildAsync();
+```
+
+- Sync lazy values work with `build()`; if an async lazy value reaches `build()` or `batch()`, a clear `ConfigurationError` tells you to use `buildAsync()`.
+
 ### Fixture Caching
 
 - Cache generated data for consistent tests
