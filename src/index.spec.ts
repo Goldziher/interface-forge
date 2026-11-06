@@ -338,6 +338,22 @@ describe('Factory class functionality', () => {
             expect(user.id).toBe('custom-id');
             expect(user.createdAt).toBeInstanceOf(Date);
         });
+
+        it('extends with only added fields while preserving base fields', () => {
+            const BaseUserFactory = new Factory<BaseUser>((factory) => ({
+                createdAt: factory.date.recent(),
+                id: factory.string.uuid(),
+            }));
+
+            const TaggedUserFactory = BaseUserFactory.extend((factory) => ({
+                tag: 'admin',
+            }));
+
+            const user = TaggedUserFactory.build();
+            expect(user.tag).toBe('admin');
+            expect(user.id).toBeDefined();
+            expect(user.createdAt).toBeInstanceOf(Date);
+        });
     });
 
     describe('partial method', () => {

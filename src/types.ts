@@ -19,6 +19,36 @@ export type FactoryComposition<T> = {
     [K in keyof T]?: Factory<T[K]> | T[K];
 };
 
+/**
+ * Extracts the output type of a factory: the full generated type when the
+ * factory holds a complete factory function, otherwise its partial output
+ * (e.g. through {@link Factory.partial}).
+ *
+ * @template F - A Factory type
+ */
+export type FactoryOutput<F> =
+    F extends Factory<infer T, FactoryOptions, infer FF>
+        ? FF extends FactoryFunction<T>
+            ? T
+            : Partial<T>
+        : F extends Factory<infer T>
+          ? Partial<T>
+          : never;
+
+/**
+ * A factory function for the added-fields overload of {@link Factory.extend}.
+ * It produces only the fields being added; base factory fields are preserved
+ * and merged automatically, giving `Factory<T & Added>`.
+ *
+ * @template T - The base type the factory extends
+ * @template Added - The fields being added
+ */
+export type AddedFieldsFunction<T, Added extends object> = (
+    factory: Factory<T>,
+    iteration: number,
+    kwargs?: Partial<T>,
+) => FactorySchema<Added> | Promise<FactorySchema<Added>>;
+
 export type FactoryFunction<T> = (
     factory: Factory<T>,
     iteration: number,

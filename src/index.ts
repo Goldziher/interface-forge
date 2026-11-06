@@ -25,6 +25,7 @@ import { merge, Ref, validateBatchSize } from './utils';
 import { DEFAULT_MAX_DEPTH } from './constants';
 import { Constraints } from './constraints';
 import type {
+    AddedFieldsFunction,
     AfterBuildHook,
     BeforeBuildHook,
     CreateManyOptions,
@@ -67,6 +68,7 @@ export type {
 export { Ref } from './utils';
 
 export type {
+    AddedFieldsFunction,
     AfterBuildHook,
     BeforeBuildHook,
     CreateManyOptions,
@@ -74,6 +76,7 @@ export type {
     FactoryComposition,
     FactoryFunction,
     FactoryOptions,
+    FactoryOutput,
     FactorySchema,
     FixtureConfiguration,
     FixtureMetadata,
@@ -478,26 +481,44 @@ export class Factory<
      * Creates a new factory that inherits from this factory's schema with modifications.
      * Unlike compose(), extend() provides access to the factory instance for dynamic property generation.
      *
-     * @template U The extended type (must extend the base type T)
+     * Two overloads are available:
+     * - Full override: the factory function returns the complete extended type, as before.
+     * - Added fields: the factory function returns only the fields being added and the
+     *   base fields are preserved automatically.
+     *
+     * @template U The extended type (must extend the base type T) or {@link AddedFieldsFunction} usage
      * @param factoryFn Function that returns properties to merge with the base schema
      * @returns A new factory with inherited and extended properties
      */
-    extend<U extends T>(factoryFn: FactoryFunction<U>): Factory<U> {
-        return new Factory<U>(
+    extend<U extends T>(factoryFn: FactoryFunction<U>): Factory<U>;
+    extend<Added extends object>(factoryFn: AddedFieldsFunction<T, Added>): Factory<T & Added>;
+    extend<T2 extends T, Added extends object>(
+        factoryFn: FactoryFunction<T2> | AddedFieldsFunction<T, Added>,
+    ): Factory<T2> {
+        return new Factory<T2>(
             (factory, iteration, kwargs) => {
-                const baseValues = this.factory(
+                // The class stores `factory` as the union FactoryFunction<T> | PartialFactoryFunction<T>,
+                // whose combined call signature needs intersection parameters; cast through unknown to a
+                // single-signature view for both base and extension calls. ~keep
+                const baseFactoryFn = this.factory as unknown as FactoryFunction<T>;
+                const baseValues = baseFactoryFn(
                     factory as unknown as Factory<T>,
                     iteration,
                     kwargs,
-                ) as unknown as FactorySchema<U>;
-                const extendedValues = factoryFn(factory, iteration, kwargs);
+                ) as unknown as FactorySchema<T2>;
+                const callExtension = factoryFn as unknown as FactoryFunction<T>;
+                const extendedValues = callExtension(
+                    factory as unknown as Factory<T>,
+                    iteration,
+                    kwargs as Partial<T> | undefined,
+                ) as unknown as FactorySchema<T2> | Promise<FactorySchema<T2>>;
                 if (extendedValues instanceof Promise || baseValues instanceof Promise) {
                     return Promise.resolve(baseValues).then((base) =>
                         Promise.resolve(extendedValues).then((extended) => ({
                             ...base,
                             ...extended,
                         })),
-                    ) as Promise<FactorySchema<U>>;
+                    ) as unknown as FactorySchema<T2>;
                 }
                 return { ...baseValues, ...extendedValues };
             },

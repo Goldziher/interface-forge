@@ -2,7 +2,7 @@
 
 import { expectTypeOf } from 'expect-type';
 import type { FactoryFunction, FactorySchema } from './index';
-import { Factory } from './index';
+import { Factory, type FactoryOutput } from './index';
 
 interface Post {
     author: User;
@@ -359,5 +359,103 @@ describe('Factory Type Tests', () => {
             name: 'John Doe',
         });
         expectTypeOf(customPartialUser).toEqualTypeOf<Partial<User>>();
+    });
+
+    it('preserves literal types through the factory pipeline', () => {
+        interface Game {
+            difficulty: 'easy' | 'hard';
+            retries: 1 | 3 | 5;
+        }
+
+        const gameFactory = new Factory<Game>((faker) => ({
+            difficulty: faker.helpers.arrayElement(['easy', 'hard'] as const),
+            retries: faker.helpers.arrayElement([1, 3, 5] as const),
+        }));
+
+        const game = gameFactory.build();
+        expectTypeOf(game).toEqualTypeOf<Game>();
+        expectTypeOf(game.difficulty).toEqualTypeOf<'easy' | 'hard'>();
+        expectTypeOf(game.retries).toEqualTypeOf<1 | 3 | 5>();
+    });
+
+    it('keeps explicit discriminated unions narrowable', () => {
+        type Shape = { kind: 'circle'; radius: number } | { kind: 'square'; size: number };
+
+        const radiusOf = (shape: Shape): number | null => (shape.kind === 'circle' ? shape.radius : null);
+
+        const shapeFactory = new Factory<Shape>((faker) => ({
+            kind: 'circle',
+            radius: faker.number.int({ max: 10, min: 1 }),
+        }));
+
+        const shape = shapeFactory.build();
+        expectTypeOf(shape).toEqualTypeOf<Shape>();
+        expectTypeOf(radiusOf(shape)).toEqualTypeOf<null | number>();
+        expectTypeOf(shape.kind).toEqualTypeOf<'circle' | 'square'>();
+    });
+
+    it('keeps extend() as object fields instead of degrading to any', () => {
+        const userFactory = new Factory<User>((faker) => ({
+            age: faker.number.int({ max: 80, min: 18 }),
+            createdAt: faker.date.past(),
+            email: faker.internet.email(),
+            id: faker.string.uuid(),
+            isActive: faker.datatype.boolean(),
+            name: faker.person.fullName(),
+        }));
+
+        const extendedFactory = userFactory.extend((factory) => ({
+            lastLoginAt: factory.date.recent(),
+        }));
+
+        const extended = extendedFactory.build();
+        expectTypeOf(extended).toEqualTypeOf<User & { lastLoginAt: Date }>();
+        expectTypeOf(extended.lastLoginAt).toEqualTypeOf<Date>();
+        expectTypeOf(extended.lastLoginAt).not.toBeAny();
+        expectTypeOf(extended.name).toEqualTypeOf<string>();
+        expectTypeOf(extended.name).not.toBeAny();
+    });
+
+    it('keeps compose() precise with FactoryOutput instead of any', () => {
+        const userFactory = new Factory<User>((faker) => ({
+            age: faker.number.int({ max: 80, min: 18 }),
+            createdAt: faker.date.past(),
+            email: faker.internet.email(),
+            id: faker.string.uuid(),
+            isActive: faker.datatype.boolean(),
+            name: faker.person.fullName(),
+        }));
+
+        const postFactory = new Factory<Post>((faker) => ({
+            author: userFactory.build(),
+            content: faker.lorem.paragraphs(),
+            id: faker.string.uuid(),
+            tags: faker.helpers.multiple(() => faker.lorem.word(), {
+                count: 3,
+            }),
+            title: faker.lorem.sentence(),
+            views: faker.number.int({ max: 10_000, min: 0 }),
+        }));
+
+        const composedFactory = postFactory.compose({ author: userFactory });
+
+        expectTypeOf(composedFactory.build()).toEqualTypeOf<Post>();
+        expectTypeOf<FactoryOutput<typeof composedFactory>>().toEqualTypeOf<Post>();
+        expectTypeOf(composedFactory.build().author).not.toBeAny();
+        expectTypeOf(composedFactory.build().content).not.toBeAny();
+    });
+
+    it('types FactoryOutput for complete and partial factories', () => {
+        const userFactory = new Factory<User>((faker) => ({
+            age: faker.number.int({ max: 80, min: 18 }),
+            createdAt: faker.date.past(),
+            email: faker.internet.email(),
+            id: faker.string.uuid(),
+            isActive: faker.datatype.boolean(),
+            name: faker.person.fullName(),
+        }));
+
+        expectTypeOf<FactoryOutput<typeof userFactory>>().toEqualTypeOf<User>();
+        expectTypeOf<FactoryOutput<ReturnType<typeof userFactory.partial>>>().toEqualTypeOf<Partial<User>>();
     });
 });

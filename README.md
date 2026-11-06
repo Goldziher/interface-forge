@@ -206,6 +206,23 @@ const orderFactory = new Factory<Order>((faker) => ({
 }));
 ```
 
+### Type Utilities
+
+- `FactoryOutput<F>` - Extract the output type of any factory
+- `extend()` has two overloads: a full-override factory function (returning the complete extended type) or an added-fields factory function returning only the new fields, which yields `Factory<T & Added>`; the base fields are preserved automatically.
+
+```typescript
+import { expectTypeOf } from 'expect-type';
+import type { FactoryOutput } from 'interface-forge';
+
+const adminFactory = userFactory.extend((factory) => ({
+    permissions: ['read', 'write'],
+}));
+
+type Admin = User & { permissions: string[] };
+expectTypeOf<FactoryOutput<typeof adminFactory>>().toEqualTypeOf<Admin>();
+```
+
 ### Fixture Caching
 
 - Cache generated data for consistent tests
