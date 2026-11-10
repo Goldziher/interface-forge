@@ -6,6 +6,8 @@
     ".agents/skills/basemind-tools/SKILL.md",
     ".agents/skills/code-quality-standards/SKILL.md",
     ".agents/skills/config-placement/SKILL.md",
+    ".agents/skills/correctness-review/SKILL.md",
+    ".agents/skills/correctness-review/references/more-invariants.md",
     ".agents/skills/dependency-awareness/SKILL.md",
     ".agents/skills/error-handling/SKILL.md",
     ".agents/skills/github-workflow-conventions/SKILL.md",
@@ -18,6 +20,7 @@
     ".agents/skills/parallelize/SKILL.md",
     ".agents/skills/parallelize/agents/openai.yaml",
     ".agents/skills/poly-lint-format/SKILL.md",
+    ".agents/skills/pull-requests/SKILL.md",
     ".agents/skills/release-workflow/SKILL.md",
     ".agents/skills/scoop-distribution/SKILL.md",
     ".agents/skills/skill-authoring/SKILL.md",
@@ -39,6 +42,8 @@
     ".claude/skills/basemind-tools/SKILL.md",
     ".claude/skills/code-quality-standards/SKILL.md",
     ".claude/skills/config-placement/SKILL.md",
+    ".claude/skills/correctness-review/SKILL.md",
+    ".claude/skills/correctness-review/references/more-invariants.md",
     ".claude/skills/dependency-awareness/SKILL.md",
     ".claude/skills/error-handling/SKILL.md",
     ".claude/skills/github-workflow-conventions/SKILL.md",
@@ -49,6 +54,7 @@
     ".claude/skills/owasp-quick-reference/SKILL.md",
     ".claude/skills/parallelize/SKILL.md",
     ".claude/skills/poly-lint-format/SKILL.md",
+    ".claude/skills/pull-requests/SKILL.md",
     ".claude/skills/release-workflow/SKILL.md",
     ".claude/skills/scoop-distribution/SKILL.md",
     ".claude/skills/skill-authoring/SKILL.md",
@@ -132,5 +138,9 @@
         "ai-rulez"
       ]
     ]
+  },
+  "assets": {
+    ".agents/skills/correctness-review/references/more-invariants.md": "487f6be34e27b3b5eb834b391c9997abbf98668b7be80a97b056faca251ba8a6",
+    ".claude/skills/correctness-review/references/more-invariants.md": "487f6be34e27b3b5eb834b391c9997abbf98668b7be80a97b056faca251ba8a6"
   }
 }
