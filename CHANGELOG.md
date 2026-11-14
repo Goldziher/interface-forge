@@ -4,6 +4,16 @@ All notable user-facing changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-11-14
+
+### Fixed
+
+- JSON Schema and Zod generators now produce values that satisfy the schema's constraints, including string patterns, which are generated with the new `randexp` dependency.
+
+### Changed
+
+- Updated dependencies, including the GraphQL development dependency to v17.
+
 ## [2.8.0] - 2026-11-06
 
 ### Added
