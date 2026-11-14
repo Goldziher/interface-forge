@@ -4,6 +4,7 @@ import type { Options, ValidateFunction } from 'ajv';
 import { isFunction, isObject, isRecord } from '@tool-belt/type-predicates';
 
 import { COLLECTION_SIZES, DEFAULT_MAX_DEPTH, NUMBER_CONSTRAINTS, STRING_LENGTHS } from './constants';
+import { generateRegex } from './regex-generator';
 import { ConfigurationError, ValidationError } from './errors';
 import { Factory, type FactoryFunction, type FactoryOptions, type PartialFactoryFunction } from './index';
 
@@ -174,6 +175,7 @@ class JsonSchemaGenerator {
         const formatted = this.#generateFormattedString(schema.format);
         if (
             formatted &&
+            (!schema.pattern || new RegExp(schema.pattern, 'u').test(formatted)) &&
             formatted.length >= min &&
             (schema.maxLength === undefined || formatted.length <= schema.maxLength)
         ) {
@@ -181,8 +183,13 @@ class JsonSchemaGenerator {
         }
 
         if (schema.pattern) {
-            const patterned = this.#generatePattern(schema.pattern, min, max);
-            if (patterned) {
+            const patterned = generateRegex(
+                new RegExp(schema.pattern, 'u'),
+                (lower, upper) => this.#factory.number.int({ min: lower, max: upper }),
+                schema.minLength,
+                schema.maxLength,
+            );
+            if (patterned !== undefined) {
                 return patterned;
             }
         }
@@ -207,46 +214,6 @@ class JsonSchemaGenerator {
             default:
                 return undefined;
         }
-    }
-
-    #generatePattern(pattern: string, minLength: number, maxLength: number): string | undefined {
-        const regex = new RegExp(pattern);
-        const candidates = [
-            this.#buildSimpleCharacterClass(pattern),
-            this.#buildPrefixedDigitPattern(pattern),
-            'mock-value',
-            'aaaaa',
-            '0000',
-        ].filter((candidate): candidate is string => typeof candidate === 'string');
-
-        return candidates.find(
-            (candidate) => candidate.length >= minLength && candidate.length <= maxLength && regex.test(candidate),
-        );
-    }
-
-    #buildPrefixedDigitPattern(pattern: string): string | undefined {
-        const match = /^\^?([\w .-]*)\[0-9\]\{(\d+)\}\$?$/.exec(pattern);
-        if (!match) {
-            return undefined;
-        }
-        return `${match[1]}${'0'.repeat(Number(match[2]))}`;
-    }
-
-    #buildSimpleCharacterClass(pattern: string): string | undefined {
-        const match = /^\^\[([A-Za-z0-9-]+)\]\{(\d+)\}\$$/.exec(pattern);
-        if (!match) {
-            return undefined;
-        }
-
-        const [, characterClass, rawLength] = match;
-        const length = Number(rawLength);
-        if (characterClass.includes('0-9')) {
-            return '0'.repeat(length);
-        }
-        if (characterClass.includes('A-Z')) {
-            return 'A'.repeat(length);
-        }
-        return 'a'.repeat(length);
     }
 
     #getType(schema: JsonSchemaObject): JsonSchemaPrimitiveType | undefined {

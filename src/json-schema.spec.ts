@@ -166,3 +166,23 @@ describe('JsonSchemaFactory', () => {
         expect(new JsonSchemaFactory<{ id: string }>(schema).build().id).toMatch(/^id-[0-9]{3}$/);
     });
 });
+
+it('generates literal prefixes with length constraints and grouped alternatives', () => {
+    const schema = {
+        properties: {
+            code: { pattern: '^(RED|BLUE)-[0-9]{4}$', type: 'string' },
+            prefix: { minLength: 5, pattern: '^abc', type: 'string' },
+        },
+        required: ['code', 'prefix'],
+        type: 'object',
+    } as const;
+    const factory = new JsonSchemaFactory<{ code: string; prefix: string }>({
+        ...schema,
+        required: [...schema.required],
+    });
+    const value = factory.build();
+
+    expect(value.code).toMatch(/^(RED|BLUE)-[0-9]{4}$/);
+    expect(value.prefix).toMatch(/^abc/);
+    expect(value.prefix.length).toBeGreaterThanOrEqual(5);
+});

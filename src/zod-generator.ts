@@ -22,6 +22,7 @@ import {
     ULID_EPOCH_FROM,
     ULID_EPOCH_TO,
 } from './constants';
+import { generateRegex } from './regex-generator';
 import { getProperty, merge } from './utils';
 import {
     builtinTypeMapping,
@@ -48,21 +49,32 @@ import {
 } from './zod-schema';
 import type { ZodFactory } from './zod';
 
-function collectNumberConstraints(checks: unknown[]): NumberConstraints {
-    const constraints: NumberConstraints = { isInt: false };
+function collectNumberConstraints(schema: ZodNumber): NumberConstraints {
+    const format = getProperty(schemaHelpers.getDef(schema), ['format']);
+    const constraints: NumberConstraints = { isInt: format === 'safeint' || format === 'int32' || format === 'uint32' };
+    if (format === 'uint32') {
+        constraints.min = 0;
+    }
+    const checks = schemaHelpers.getChecks(schema);
 
     for (const check of checks) {
         if (isLessThanCheck(check)) {
             const inclusive = schemaHelpers.getCheckInclusive(check);
             const value = schemaHelpers.getCheckValue(check);
             if (typeof value === 'number') {
-                constraints.max = inclusive ? value : value - NUMBER_CONSTRAINTS.PRECISION_OFFSET;
+                constraints.max = Math.min(
+                    constraints.max ?? Infinity,
+                    inclusive ? value : value - NUMBER_CONSTRAINTS.PRECISION_OFFSET,
+                );
             }
         } else if (isGreaterThanCheck(check)) {
             const inclusive = schemaHelpers.getCheckInclusive(check);
             const value = schemaHelpers.getCheckValue(check);
             if (typeof value === 'number') {
-                constraints.min = inclusive ? value : value + NUMBER_CONSTRAINTS.PRECISION_OFFSET;
+                constraints.min = Math.max(
+                    constraints.min ?? -Infinity,
+                    inclusive ? value : value + NUMBER_CONSTRAINTS.PRECISION_OFFSET,
+                );
             }
         } else if (isMultipleOfCheck(check)) {
             const value = schemaHelpers.getCheckValue(check);
@@ -87,7 +99,7 @@ function resolveNumberBounds({ isInt, max, min, step }: NumberConstraints): { ma
     if (min !== undefined && Number.isFinite(min)) {
         safeMin = min;
     } else if (step && min === undefined) {
-        safeMin = 0;
+        safeMin = Math.min(0, max ?? 0);
     } else {
         safeMin = isInt ? NUMBER_CONSTRAINTS.DEFAULT_INT_MIN : NUMBER_CONSTRAINTS.DEFAULT_MIN;
     }
@@ -99,16 +111,33 @@ function resolveNumberBounds({ isInt, max, min, step }: NumberConstraints): { ma
         safeMax = isInt ? NUMBER_CONSTRAINTS.DEFAULT_INT_MAX : NUMBER_CONSTRAINTS.DEFAULT_MAX;
     }
 
+    if (min === undefined && safeMin > safeMax) {
+        safeMin = safeMax - (step ?? NUMBER_CONSTRAINTS.DEFAULT_MAX);
+    }
+    if (max === undefined && safeMax < safeMin) {
+        safeMax = safeMin + (step ?? NUMBER_CONSTRAINTS.DEFAULT_MAX);
+    }
+
     return { max: safeMax, min: safeMin };
 }
 
-function roundToStep(value: number, step: number): number {
-    let result = Math.round(value / step) * step;
-    if (step < 1) {
-        const precision = Math.ceil(-Math.log10(step));
-        result = Math.round(result * Math.pow(10, precision)) / Math.pow(10, precision);
+function decimalPlaces(value: number): number {
+    const [coefficient, exponent = '0'] = value.toString().split('e');
+    return Math.max(0, (coefficient?.split('.')[1]?.length ?? 0) - Number(exponent));
+}
+
+function integerStep(step: number): number {
+    const scale = 10 ** decimalPlaces(step);
+    const numerator = Math.round(step * scale);
+    if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(scale)) {
+        throw new RangeError('Cannot generate integer multiples of this decimal step');
     }
-    return Object.is(result, -0) ? 0 : result;
+    let a = numerator;
+    let b = scale;
+    while (b !== 0) {
+        [a, b] = [b, a % b];
+    }
+    return numerator / a;
 }
 
 /**
@@ -422,47 +451,30 @@ export class ZodSchemaGenerator {
         return this.factory.date.recent();
     }
 
-    private generateFromRegex(check: $ZodCheckRegex): string {
-        const v4Pattern = getProperty(check, ['_zod', 'def', 'pattern']) as RegExp | undefined;
-        const v3Regex = getProperty(check, ['regex']) as RegExp | undefined;
-        const v3Pattern = getProperty(check, ['pattern']) as RegExp | undefined;
-
-        const pattern = v4Pattern ?? v3Regex ?? v3Pattern;
+    private generateFromRegex(check: $ZodCheckRegex, constraints: SizeConstraints): string | undefined {
+        const pattern =
+            getProperty(check, ['_zod', 'def', 'pattern']) ??
+            getProperty(check, ['regex']) ??
+            getProperty(check, ['pattern']);
         if (pattern instanceof RegExp) {
-            const { source } = pattern;
-            if (source.includes('@')) {
-                return this.factory.internet.email();
+            if (pattern.source === '^\\+?[\\d\\s\\-()]+$') {
+                const digit = (length: number) => this.factory.string.numeric({ length });
+                const phone = `+${digit(1)} (${digit(3)}) ${digit(3)}-${digit(4)}`;
+                if (
+                    phone.length >= (constraints.exactLength ?? constraints.minLength ?? 0) &&
+                    phone.length <= (constraints.exactLength ?? constraints.maxLength ?? Infinity)
+                ) {
+                    return phone;
+                }
             }
-
-            if (source === '^[a-zA-Z0-9_]+$') {
-                return this.factory.string.alphanumeric(10);
-            }
-            if (source === '^[A-Z]{3}-\\d{3}$') {
-                return `${this.factory.string.alpha({
-                    casing: 'upper',
-                    length: 3,
-                })}-${this.factory.string.numeric({ length: 3 })}`;
-            }
-
-            if (
-                source.includes('+') &&
-                source.includes('\\d') &&
-                (source.includes('-') || source.includes('\\-')) &&
-                source.includes('(')
-            ) {
-                return `+${this.factory.string.numeric({ length: 1 })} (${this.factory.string.numeric({ length: 3 })}) ${this.factory.string.numeric({ length: 3 })}-${this.factory.string.numeric({ length: 4 })}`;
-            }
-
-            if (source === '^\\d{5}$') {
-                return this.factory.string.numeric({ length: 5 });
-            }
-
-            if (source === '^key_') {
-                return `key_${this.factory.string.alphanumeric(10)}`;
-            }
+            return generateRegex(
+                pattern,
+                (min, max) => this.factory.number.int({ min, max }),
+                constraints.exactLength ?? constraints.minLength,
+                constraints.exactLength ?? constraints.maxLength,
+            );
         }
-
-        return this.factory.string.alphanumeric(10);
+        return undefined;
     }
 
     private generateFromZodType(schema: ZodType, currentDepth: number): unknown {
@@ -653,29 +665,46 @@ export class ZodSchemaGenerator {
     }
 
     private generateNumber(schema: ZodNumber): number {
-        const constraints = collectNumberConstraints(schemaHelpers.getChecks(schema));
+        const constraints = collectNumberConstraints(schema);
         const { isInt, step } = constraints;
-
-        const options = resolveNumberBounds(constraints);
-        let result = isInt ? this.factory.number.int(options) : this.factory.number.float(options);
+        const { min, max } = resolveNumberBounds(constraints);
 
         if (step && step > 0) {
-            result = roundToStep(result, step);
+            const stride = isInt ? integerStep(step) : step;
+            const precision = decimalPlaces(stride);
+            const scale = 10 ** precision;
+            const scaledStride = Math.round(stride * scale);
+            const first = Math.ceil((min * scale) / scaledStride);
+            const last = Math.floor((max * scale) / scaledStride);
+            return (this.factory.number.int({ min: first, max: last }) * scaledStride) / scale;
         }
 
-        if (isInt) {
-            result = Math.floor(result);
+        return isInt
+            ? this.factory.number.int({ min: Math.ceil(min), max: Math.floor(max) })
+            : this.factory.number.float({ min, max });
+    }
+
+    private generateBigInt(schema: ZodType): bigint {
+        let min: bigint | undefined;
+        let max: bigint | undefined;
+        for (const check of schemaHelpers.getChecks(schema)) {
+            const value = schemaHelpers.getCheckValue(check);
+            if (typeof value !== 'bigint') {
+                continue;
+            }
+            const offset = schemaHelpers.getCheckInclusive(check) ? 0n : 1n;
+            if (isGreaterThanCheck(check) && (min === undefined || value + offset > min)) {
+                min = value + offset;
+            } else if (isLessThanCheck(check) && (max === undefined || value - offset < max)) {
+                max = value - offset;
+            }
         }
 
-        if (Object.is(result, -0)) {
-            result = 0;
-        }
-
-        if (step && result === 0) {
-            result = step;
-        }
-
-        return Number.isFinite(result) ? result : 0;
+        const span = 1_000_000n;
+        return this.factory.number.bigInt({
+            min: min ?? (max === undefined ? 0n : max - span),
+            max: max ?? (min ?? 0n) + span,
+        });
     }
 
     private generateObject(schema: ZodObject, currentDepth: number): Record<string, unknown> {
@@ -746,37 +775,31 @@ export class ZodSchemaGenerator {
     private generateString(schema: ZodString): string {
         const checks = schemaHelpers.getChecks(schema);
 
+        const constraints = this.extractSizeConstraints(checks);
         for (const check of checks) {
-            if (isStringFormatCheck(check)) {
-                const format = schemaHelpers.getCheckFormat(check);
-                switch (format) {
-                    case 'email': {
-                        return this.factory.internet.email();
-                    }
-                    case 'guid':
-                    case 'uuid': {
-                        return this.factory.string.uuid();
-                    }
-                    case 'regex': {
-                        if (isRegexCheck(check)) {
-                            return this.generateFromRegex(check);
-                        }
-                        break;
-                    }
-                    case undefined: {
-                        break;
-                    }
-                    case 'url': {
-                        return this.factory.internet.url();
-                    }
-                    default: {
-                        break;
-                    }
+            if (!isStringFormatCheck(check)) {
+                continue;
+            }
+            if (isRegexCheck(check)) {
+                const value = this.generateFromRegex(check, constraints);
+                if (value !== undefined) {
+                    return value;
                 }
+                continue;
+            }
+
+            const format = schemaHelpers.getCheckFormat(check);
+            if (format === 'guid') {
+                return this.factory.string.uuid();
+            }
+            if (format && Object.hasOwn(this.stringFormatGenerators, format)) {
+                return this.stringFormatGenerators[format as keyof typeof this.stringFormatGenerators](this);
+            }
+            if (format && Object.hasOwn(this.dateFormatGenerators, format)) {
+                return this.dateFormatGenerators[format as keyof typeof this.dateFormatGenerators](this);
             }
         }
 
-        const constraints = this.extractSizeConstraints(checks);
         return this.generateStringWithConstraints(constraints);
     }
 
@@ -814,7 +837,7 @@ export class ZodSchemaGenerator {
 
     private initializeBuiltinHandlers(): void {
         const builtinHandlers: Record<string, ZodTypeHandler> = {
-            ZodBigInt: (_schema, generator) => BigInt(generator.factory.number.int({ max: 1_000_000, min: 0 })),
+            ZodBigInt: (schema, generator) => generator.generateBigInt(schema),
 
             ZodCustom: () => {
                 throw new Error(
