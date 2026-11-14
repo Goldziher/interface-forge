@@ -89,22 +89,23 @@
         "ajv-formats": "^3.0.1",
         "docusaurus-plugin-typedoc": "^1.4.3",
         "expect-type": "^1.4.0",
-        "graphql": "^16.15.0",
+        "graphql": "^17.1.0",
         "http-server": "^14.1.1",
-        "mongoose": "^9.12.0",
+        "mongoose": "^9.12.1",
         "rimraf": "^6.1.4",
         "type-fest": "^5.10.0",
         "typedoc": "^0.28.20",
         "typedoc-plugin-markdown": "^4.14.1",
         "typescript": "^7.0.2",
-        "vite": "^8.3.6",
+        "vite": "^8.3.8",
         "vite-plugin-dts": "^5.1.2",
         "vitest": "^5.1.0",
         "zod": "^4.6.7"
     },
     "dependencies": {
         "@faker-js/faker": "^10.6.0",
-        "@tool-belt/type-predicates": "^1.4.1"
+        "@tool-belt/type-predicates": "^1.4.1",
+        "randexp": "^0.6.1"
     },
     "peerDependencies": {
         "ajv": ">=8.0.0",
