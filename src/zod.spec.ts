@@ -692,3 +692,24 @@ describe('ZodFactory', () => {
         });
     });
 });
+
+it('generates documented formats and constrained numbers accepted by Zod', () => {
+    const schema = z.object({
+        base64: z.string().base64(),
+        bigint: z.bigint().min(5n).max(9n),
+        cuid: z.string().cuid(),
+        date: z.string().date(),
+        datetime: z.string().datetime(),
+        decimal: z.number().min(1.01).max(1.49).multipleOf(0.25),
+        int: z.int(),
+        jwt: z.string().jwt(),
+        multiple: z.number().int().min(50).max(60).multipleOf(7),
+        regex: z.string().regex(/^[A-Z]{3}-\d{4}$/),
+    });
+
+    for (const value of new ZodFactory(schema).batch(25)) {
+        expect(schema.safeParse(value).success).toBe(true);
+        expect(value.decimal).toBe(1.25);
+        expect(value.multiple).toBe(56);
+    }
+});
